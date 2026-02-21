@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import { useAuthStore } from '@/store/auth';
 import { DEFAULT_TENANT_ID } from '@/mocks/tenants';
@@ -11,6 +12,7 @@ import {
   buildRedirectUrl,
 } from '@/lib/redirect';
 import styles from './AuthPortal.module.scss';
+import authFormStyles from './AuthForm.module.scss';
 
 export const AuthPortal: React.FC = () => {
   const navigate = useNavigate();
@@ -44,6 +46,7 @@ export const AuthPortal: React.FC = () => {
   const [emailError, setEmailError] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isPasswordless, setIsPasswordless] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -148,11 +151,11 @@ export const AuthPortal: React.FC = () => {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.emailInput}>
-            <div className={`${styles.inputGroup} ${isFocused ? styles.focused : ''} ${emailError ? styles.error : ''}`}>
-              <div className={styles.inputRow}>
+            <div className={`${authFormStyles.inputGroup} ${isFocused ? authFormStyles.focused : ''} ${emailError ? authFormStyles.error : ''}`}>
+              <div className={authFormStyles.inputRow}>
                 <input
                   type="email"
-                  className={styles.input}
+                  className={authFormStyles.input}
                   placeholder="account email"
                   value={email}
                   onChange={handleEmailChange}
@@ -162,30 +165,36 @@ export const AuthPortal: React.FC = () => {
                 />
               </div>
               {!isPasswordless && (
-                <div className={styles.inputRow}>
+                <div className={authFormStyles.inputRow}>
                   <input
-                    type="password"
-                    className={styles.input}
+                    type={showPassword ? 'text' : 'password'}
+                    className={authFormStyles.input}
                     placeholder="password"
                     value={password}
                     onChange={handlePasswordChange}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                   />
+                  <button
+                    type="button"
+                    className={authFormStyles.passwordPeek}
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               )}
-              <div className={styles.submitRow}>
+              <div className={authFormStyles.submitRow}>
                 <button
                   type="submit"
-                  className={styles.submitButton}
+                  className={authFormStyles.submitButton}
                   disabled={!email.trim() || !!emailError || (!isPasswordless && !password.trim()) || isLoading}
                 >
                   {isLoading ? (
-                    <span className={styles.spinner} />
+                    <span className={authFormStyles.spinner} />
                   ) : (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
+                    'Sign in'
                   )}
                 </button>
               </div>

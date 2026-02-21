@@ -2,70 +2,26 @@
   width: 100%;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: var(--space-8);
-}
-
-.title {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-3);
-  line-height: var(--line-height-tight);
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-relaxed);
-}
-
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  margin-bottom: var(--space-8);
-}
-
-.passwordToggle {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  padding: var(--space-2);
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-fast);
-
-  &:hover {
-    background: var(--color-bg-secondary);
-    color: var(--color-text-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--color-lime);
-    outline-offset: 2px;
-  }
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
 }
 
 .passwordStrength {
-  background: var(--color-bg-glass);
-  border: 1px solid var(--color-border-glass);
-  border-radius: var(--radius-xl);
-  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin-top: var(--space-2);
-  backdrop-filter: var(--glass-blur);
 }
 
 .strengthBar {
-  width: 100%;
-  height: 6px;
+  flex: 1;
+  height: 4px;
   background: var(--color-border-primary);
   border-radius: var(--radius-full);
   overflow: hidden;
-  margin-bottom: var(--space-3);
 }
 
 .strengthFill {
@@ -75,39 +31,11 @@
   transition: width var(--transition-normal);
 }
 
-.strengthInfo {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-3);
-}
-
 .strengthText {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  font-family: 'Outfit', sans-serif;
-}
-
-.strengthFeedback {
-  list-style: none;
-  padding: 0;
-  margin: 0;
   font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  flex: 1;
-
-  li {
-    margin-bottom: var(--space-1);
-    position: relative;
-    padding-left: var(--space-3);
-
-    &::before {
-      content: '•';
-      position: absolute;
-      left: 0;
-      color: var(--color-text-muted);
-    }
-  }
+  font-weight: var(--font-weight-medium);
+  font-family: 'Outfit', sans-serif;
+  flex-shrink: 0;
 }
 
 .errorMessage {
@@ -184,58 +112,20 @@
   }
 }
 
-// Dark mode adjustments
 [data-theme="dark"] {
-  .passwordStrength {
-    background: var(--glass-background);
-    border-color: var(--color-border-glass);
-  }
-
-  .strengthBar {
-    background: var(--color-border-primary);
-  }
-
   .errorMessage {
     background: rgba(var(--color-error-rgb), 0.15);
     border-color: rgba(var(--color-error-rgb), 0.3);
   }
 
-  .divider {
-    &::before {
-      background: var(--color-border-primary);
-    }
-
-    span {
-      background: var(--color-bg-primary);
-    }
-  }
-
-  .passwordToggle {
-    &:hover {
-      background: var(--color-bg-secondary);
-    }
+  .divider span {
+    background: var(--color-bg-primary);
   }
 }
 
-// Responsive design
 @media (max-width: 640px) {
-  .header {
-    margin-bottom: var(--space-6);
-  }
-
-  .title {
-    font-size: var(--font-size-2xl);
-  }
-
   .form {
-    gap: var(--space-4);
-    margin-bottom: var(--space-6);
-  }
-
-  .strengthInfo {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2);
+    margin-bottom: var(--space-4);
   }
 
   .divider {

@@ -1,12 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { z } from 'zod';
-import { Mail, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/store/auth';
+import authFormStyles from './AuthForm.module.scss';
 import styles from './ForgotPasswordForm.module.scss';
 
 const forgotPasswordSchema = z.object({
@@ -26,6 +24,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   onBackToLogin,
   onSuccess,
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
   const { sendPasswordReset, isLoading, error } = useAuthStore();
 
   const {
@@ -45,6 +44,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
     }
   };
 
+  const hasError = !!errors.email?.message || !!error;
+
   return (
     <motion.div
       className={styles.container}
@@ -52,52 +53,44 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className={styles.header}>
-        <button
-          type="button"
-          onClick={onBackToLogin}
-          className={styles.backButton}
-        >
-          <ArrowLeft size={16} />
-          Back to sign in
-        </button>
-        
-        <h1 className={styles.title}>Reset your password</h1>
-        <p className={styles.subtitle}>
-          Enter your email address and we'll send you a link to reset your password
-        </p>
-      </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-        <Input
-          label="Email address"
-          type="email"
-          placeholder="Enter your email"
-          leftIcon={<Mail size={16} />}
-          fullWidth
-          error={errors.email?.message}
-          {...register('email')}
-        />
+        <div
+          className={`${authFormStyles.inputGroup} ${isFocused ? authFormStyles.focused : ''} ${hasError ? authFormStyles.error : ''}`}
+        >
+          <div className={authFormStyles.inputRow}>
+            <input
+              type="email"
+              className={authFormStyles.input}
+              placeholder="account email"
+              {...register('email')}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+            />
+          </div>
+          <div className={authFormStyles.submitRow}>
+            <button
+              type="submit"
+              className={authFormStyles.submitButton}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className={authFormStyles.spinner} />
+              ) : (
+                'Send reset link'
+              )}
+            </button>
+          </div>
+        </div>
 
-        {error && (
+        {(errors.email?.message || error) && (
           <motion.div
             className={styles.errorMessage}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            {error}
+            {errors.email?.message || error}
           </motion.div>
         )}
-
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          fullWidth
-          loading={isLoading}
-        >
-          Send reset link
-        </Button>
       </form>
 
       <div className={styles.footer}>
@@ -114,4 +107,4 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       </div>
     </motion.div>
   );
-}; 
+};
