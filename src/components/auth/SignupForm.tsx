@@ -3,17 +3,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { z } from 'zod';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
-import { generateUsername, getPasswordStrength } from '@/lib/utils';
+import { authApi } from '@/lib/auth-api';
+import { generateUsername, generateUsernameWithAI, getPasswordStrength } from '@/lib/utils';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import authFormStyles from './AuthForm.module.scss';
 import styles from './SignupForm.module.scss';
 
 const signupSchema = z.object({
-  name: z.string().min(1, 'Full name is required'),
   email: z.string().email('Please enter a valid email address'),
-  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -32,6 +32,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [usernameTaken, setUsernameTaken] = useState<string | null>(null);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isGeneratingUsername, setIsGeneratingUsername] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [] as string[] });
   const { signup, isLoading, error } = useAuthStore();
 
@@ -41,30 +44,67 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
     formState: { errors },
     watch,
     setValue,
+    clearErrors,
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   });
 
   const email = watch('email');
+  const username = watch('username');
   const password = watch('password') ?? '';
 
   useEffect(() => {
-    if (email && !watch('username')) {
-      const generatedUsername = generateUsername(email);
-      setValue('username', generatedUsername);
+    if (email && !username) {
+      const generated = generateUsername(email);
+      setValue('username', generated);
     }
-  }, [email, setValue, watch]);
+  }, [email, setValue, watch, username]);
 
   useEffect(() => {
     setPasswordStrength(password ? getPasswordStrength(password) : { score: 0, feedback: [] });
   }, [password]);
 
+  const checkUsernameAvailability = async (value: string) => {
+    if (!value || value.length < 3) {
+      setUsernameTaken(null);
+      return;
+    }
+    setIsCheckingUsername(true);
+    setUsernameTaken(null);
+    try {
+      const available = await authApi.checkUsernameAvailability(value);
+      if (!available) {
+        setUsernameTaken(value);
+      }
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
+
+  const handleUsernameBlur = () => {
+    const value = watch('username');
+    if (value) checkUsernameAvailability(value);
+  };
+
+  const handleGenerateUsername = async () => {
+    if (!email) return;
+    setIsGeneratingUsername(true);
+    try {
+      const generated = await generateUsernameWithAI(email);
+      setValue('username', generated);
+      clearErrors('username');
+      await checkUsernameAvailability(generated);
+    } finally {
+      setIsGeneratingUsername(false);
+    }
+  };
+
   const onSubmit = async (data: SignupFormData) => {
+    if (usernameTaken) return;
     try {
       await signup({
         email: data.email,
         password: data.password,
-        name: data.name,
         username: data.username,
         tenantId,
       });
@@ -86,7 +126,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
     return 'Strong';
   };
 
-  const hasError = !!error || Object.keys(errors).length > 0;
+  const hasError = !!error || !!usernameTaken || Object.keys(errors).length > 0;
 
   return (
     <motion.div
@@ -101,16 +141,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
         >
           <div className={authFormStyles.inputRow}>
             <input
-              type="text"
-              className={authFormStyles.input}
-              placeholder="full name"
-              {...register('name')}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-            />
-          </div>
-          <div className={authFormStyles.inputRow}>
-            <input
               type="email"
               className={authFormStyles.input}
               placeholder="account email"
@@ -123,11 +153,24 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
             <input
               type="text"
               className={authFormStyles.input}
-              placeholder="username (leave blank to auto-generate)"
+              placeholder="username"
               {...register('username')}
               onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
+              onBlur={() => {
+                setIsFocused(false);
+                handleUsernameBlur();
+              }}
             />
+            <button
+              type="button"
+              className={`${authFormStyles.passwordPeek} ${isGeneratingUsername ? styles.aiLoading : ''}`}
+              onClick={handleGenerateUsername}
+              disabled={!email || isGeneratingUsername}
+              aria-label="Generate username with AI"
+              title="Generate username"
+            >
+              <Sparkles size={16} className={isGeneratingUsername ? styles.aiSpinner : ''} />
+            </button>
           </div>
           <div className={authFormStyles.inputRow}>
             <input
@@ -169,7 +212,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
             <button
               type="submit"
               className={authFormStyles.submitButton}
-              disabled={isLoading}
+              disabled={isLoading || !!usernameTaken || isCheckingUsername}
             >
               {isLoading ? (
                 <span className={authFormStyles.spinner} />
@@ -179,6 +222,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
             </button>
           </div>
         </div>
+
+        {usernameTaken && (
+          <motion.div
+            className={styles.errorMessage}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            This username is already taken
+          </motion.div>
+        )}
 
         {password && (
           <motion.div

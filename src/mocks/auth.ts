@@ -1,6 +1,6 @@
 import type { User } from '@/types/auth';
 import type { Tenant } from '@/types/tenant';
-import { findUserByEmail, findUserById, MOCK_USERS, MOCK_BACKUP_CODES } from './users';
+import { findUserByEmail, findUserById, findUserByUsername, MOCK_USERS, MOCK_BACKUP_CODES } from './users';
 import { getTenantById } from './tenants';
 
 const MOCK_DELAY_MS = 800;
@@ -26,6 +26,20 @@ function findUserByEmailOrSignedUp(email: string): (User & { password: string })
   return Array.from(mockSignedUpUsers.values()).find(
     (u) => u.email.toLowerCase() === email.toLowerCase()
   );
+}
+
+function isUsernameTaken(username: string): boolean {
+  if (!username?.trim()) return false;
+  const lower = username.trim().toLowerCase();
+  if (findUserByUsername(username)) return true;
+  return Array.from(mockSignedUpUsers.values()).some(
+    (u) => u.username?.toLowerCase() === lower
+  );
+}
+
+export async function mockCheckUsernameAvailability(username: string): Promise<boolean> {
+  await delay(300);
+  return !isUsernameTaken(username);
 }
 
 export async function mockLogin(
@@ -59,19 +73,22 @@ export async function mockLogin(
 export async function mockSignup(payload: {
   email: string;
   password: string;
-  name: string;
-  username?: string;
+  name?: string;
+  username: string;
   tenantId: string;
 }): Promise<{ user: User; verificationToken: string }> {
   await delay();
   if (findUserByEmailOrSignedUp(payload.email)) {
     throw new Error('An account with this email already exists');
   }
+  if (isUsernameTaken(payload.username)) {
+    throw new Error('This username is already taken');
+  }
   const userId = `user_${Date.now()}`;
   const user: User = {
     id: userId,
     email: payload.email,
-    name: payload.name,
+    name: payload.name ?? '',
     username: payload.username,
     isAuthenticated: false,
     isEmailVerified: false,

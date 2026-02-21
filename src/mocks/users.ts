@@ -80,3 +80,9 @@ export function findUserByEmail(email: string): (User & { password: string }) | 
 export function findUserById(id: string): (User & { password: string }) | undefined {
   return MOCK_USERS.find((u) => u.id === id);
 }
+
+export function findUserByUsername(username: string): (User & { password: string }) | undefined {
+  if (!username?.trim()) return undefined;
+  const lower = username.trim().toLowerCase();
+  return MOCK_USERS.find((u) => u.username?.toLowerCase() === lower);
+}

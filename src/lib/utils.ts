@@ -31,6 +31,15 @@ export function generateUsername(email: string): string {
 }
 
 /**
+ * Generate a username (AI placeholder - will use AI in future)
+ */
+export async function generateUsernameWithAI(email: string): Promise<string> {
+  // Placeholder: same as generateUsername for now. Will integrate AI later.
+  await new Promise((r) => setTimeout(r, 200));
+  return generateUsername(email);
+}
+
+/**
  * Validate email format
  */
 export function isValidEmail(email: string): boolean {

@@ -31,7 +31,6 @@
 
   &:hover {
     border-color: var(--color-border-secondary);
-    background: var(--color-bg-secondary);
   }
 
   &.focused {
@@ -92,6 +91,11 @@
   &:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+  }
+
+  &:focus,
+  &:focus-visible {
+    background: transparent !important;
   }
 
   /* Override ugly autofill background */

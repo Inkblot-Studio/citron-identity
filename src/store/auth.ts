@@ -24,8 +24,8 @@ export interface AuthActions {
   signup: (payload: {
     email: string;
     password: string;
-    name: string;
-    username?: string;
+    name?: string;
+    username: string;
     tenantId: string;
   }) => Promise<void>;
   sendMagicLink: (email: string, tenantId: string) => Promise<void>;

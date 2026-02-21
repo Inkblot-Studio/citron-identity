@@ -12,6 +12,7 @@ import {
   mockConfirmMFA,
   mockVerifyMFA,
   mockGetTenantsForUser,
+  mockCheckUsernameAvailability,
 } from '@/mocks/auth';
 
 export interface AuthApi {
@@ -19,10 +20,11 @@ export interface AuthApi {
   signup(payload: {
     email: string;
     password: string;
-    name: string;
-    username?: string;
+    name?: string;
+    username: string;
     tenantId: string;
   }): Promise<{ user: User; verificationToken: string }>;
+  checkUsernameAvailability(username: string): Promise<boolean>;
   sendMagicLink(email: string, tenantId: string): Promise<void>;
   verifyMagicLink(token: string): Promise<User>;
   sendPasswordReset(email: string, tenantId: string): Promise<void>;
@@ -37,6 +39,7 @@ export interface AuthApi {
 export const authApi: AuthApi = {
   login: mockLogin,
   signup: mockSignup,
+  checkUsernameAvailability: mockCheckUsernameAvailability,
   sendMagicLink: mockSendMagicLink,
   verifyMagicLink: mockVerifyMagicLink,
   sendPasswordReset: mockSendPasswordReset,
