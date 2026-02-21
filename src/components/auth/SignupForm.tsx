@@ -25,14 +25,15 @@ const signupSchema = z.object({
 type SignupFormData = z.infer<typeof signupSchema>;
 
 interface SignupFormProps {
+  tenantId: string;
   onSwitchToLogin: () => void;
 }
 
-export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
+export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [] as string[] });
-  const { signup, isLoading, error, clearError } = useAuthStore();
+  const { signup, isLoading, error } = useAuthStore();
 
   const {
     register,
@@ -69,8 +70,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
         password: data.password,
         name: data.name,
         username: data.username,
+        tenantId,
       });
-    } catch (error) {
+    } catch {
       // Error is handled by the store
     }
   };
@@ -234,7 +236,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
         <span>or continue with</span>
       </div>
 
-      <SocialLoginButtons />
+      <SocialLoginButtons onGoogleSignIn={async () => {
+        console.log('Google sign-in for tenant:', tenantId);
+      }} />
 
       <div className={styles.footer}>
         <p>

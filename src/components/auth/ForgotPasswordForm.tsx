@@ -16,13 +16,17 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 interface ForgotPasswordFormProps {
+  tenantId: string;
   onBackToLogin: () => void;
+  onSuccess?: () => void;
 }
 
 export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
+  tenantId,
   onBackToLogin,
+  onSuccess,
 }) => {
-  const { sendMagicLink, isLoading, error, clearError } = useAuthStore();
+  const { sendPasswordReset, isLoading, error } = useAuthStore();
 
   const {
     register,
@@ -34,8 +38,9 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      await sendMagicLink(data.email);
-    } catch (error) {
+      await sendPasswordReset(data.email, tenantId);
+      onSuccess?.();
+    } catch {
       // Error is handled by the store
     }
   };

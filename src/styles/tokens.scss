@@ -1,7 +1,6 @@
 // InkID Authentication Portal — Citron Design System
 // All design tokens sourced from @citron-systems/citron-ds
-
-@import '@citron-systems/citron-ds/css';
+// Base tokens (inkblot-variables.css) are imported in global.css to avoid Sass @import deprecation
 
 // =============================================================================
 // LIGHT THEME — Semantic aliases mapping to citron-ds

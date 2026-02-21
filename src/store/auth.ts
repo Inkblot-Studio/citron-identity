@@ -1,201 +1,288 @@
 import { create } from 'zustand';
+import type { User } from '@/types/auth';
 
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  avatar?: string;
-  isAuthenticated: boolean;
-  isEmailVerified: boolean;
-  hasSubscription: boolean;
-  subscriptionPlan?: 'monthly' | 'yearly';
-  trialEndsAt?: Date;
-}
+export type { User };
+import { authApi } from '@/lib/auth-api';
+import { useTenantStore } from './tenant';
+
+const STORAGE_KEY = 'inkid_user';
+const SESSION_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export interface AuthState {
   user: User | null;
   isLoading: boolean;
-  currentStep: 'email' | 'authenticate' | 'testimonials' | 'subscription' | 'payment' | 'complete';
-  emailSent: boolean;
-  testimonialsShown: boolean;
   error: string | null;
   isInitializing: boolean;
+  pendingMFA: boolean;
+  pendingEmailVerification: boolean;
+  mfaSecret?: string;
+  mfaQrDataUrl?: string;
 }
 
 export interface AuthActions {
-  // Email step
-  submitEmail: (email: string) => Promise<void>;
-  
-  // Authentication step
-  authenticateEmail: (token: string) => Promise<void>;
-  
-  // Testimonials step
-  showTestimonials: () => void;
-  completeTestimonials: () => void;
-  
-  // Subscription step
-  selectPlan: (plan: 'monthly' | 'yearly') => void;
-  skipSubscription: () => void;
-  
-  // Payment step
-  processPayment: (paymentData: any) => Promise<void>;
-  
-  // General actions
-  setLoading: (loading: boolean) => void;
+  login: (email: string, password: string, tenantId: string) => Promise<void>;
+  signup: (payload: {
+    email: string;
+    password: string;
+    name: string;
+    username?: string;
+    tenantId: string;
+  }) => Promise<void>;
+  sendMagicLink: (email: string, tenantId: string) => Promise<void>;
+  verifyMagicLink: (token: string) => Promise<void>;
+  sendPasswordReset: (email: string, tenantId: string) => Promise<void>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
+  setupMFA: (userId: string) => Promise<void>;
+  confirmMFA: (userId: string, code: string) => Promise<void>;
+  verifyMFA: (userId: string, code: string) => Promise<void>;
   setError: (error: string | null) => void;
+  clearError: () => void;
   logout: () => void;
   initialize: () => Promise<void>;
+  completeTestimonials?: () => void;
+  selectPlan?: (plan: 'monthly' | 'yearly') => void;
+  skipSubscription?: () => void;
+}
+
+function persistUser(user: User | null): void {
+  if (user) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...user,
+      _expiresAt: Date.now() + SESSION_TTL,
+    }));
+  } else {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+function loadPersistedUser(): User | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data._expiresAt && data._expiresAt < Date.now()) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    delete data._expiresAt;
+    return data;
+  } catch {
+    return null;
+  }
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
-  // Initial state
   user: null,
   isLoading: false,
-  currentStep: 'email',
-  emailSent: false,
-  testimonialsShown: false,
   error: null,
   isInitializing: true,
+  pendingMFA: false,
+  pendingEmailVerification: false,
+  mfaSecret: undefined,
+  mfaQrDataUrl: undefined,
 
-  // Email step
-  submitEmail: async (email: string) => {
+  login: async (email, password, tenantId) => {
     set({ isLoading: true, error: null });
-    
     try {
-      // Simulate email sending
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      set({ 
-        emailSent: true, 
-        currentStep: 'authenticate',
-        isLoading: false 
+      const result = await authApi.login(email, password, tenantId);
+      if (result.requiresMfa) {
+        set({
+          user: result.user,
+          pendingMFA: true,
+          isLoading: false,
+        });
+      } else {
+        persistUser(result.user);
+        useTenantStore.getState().loadTenantsForUser(result.user.id);
+        useTenantStore.getState().setTenant({ id: tenantId, slug: tenantId, name: tenantId });
+        set({ user: result.user, isLoading: false, pendingMFA: false });
+      }
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Login failed',
+        isLoading: false,
       });
-      
-      // In real implementation, this would send a magic link email
-      console.log('Magic link email sent to:', email);
-      
-    } catch (error) {
-      set({ 
-        error: 'Failed to send email. Please try again.',
-        isLoading: false 
-      });
+      throw err;
     }
   },
 
-  // Authentication step
-  authenticateEmail: async (token: string) => {
+  signup: async (payload) => {
     set({ isLoading: true, error: null });
-    
     try {
-      // Simulate token verification
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create user from email
-      const email = 'user@example.com'; // In real app, extract from token
-      const user: User = {
-        id: 'user_' + Date.now(),
-        email,
-        isAuthenticated: true,
-        isEmailVerified: true,
-        hasSubscription: false,
-      };
-      
-      set({ 
-        user,
-        currentStep: 'testimonials',
-        isLoading: false 
+      const { user } = await authApi.signup(payload);
+      set({ user, isLoading: false, pendingEmailVerification: true });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Signup failed',
+        isLoading: false,
       });
-      
-    } catch (error) {
-      set({ 
-        error: 'Invalid or expired authentication link.',
-        isLoading: false 
-      });
+      throw err;
     }
   },
 
-  // Testimonials step
-  showTestimonials: () => {
-    set({ testimonialsShown: true });
-  },
-
-  completeTestimonials: () => {
-    set({ currentStep: 'subscription' });
-  },
-
-  // Subscription step
-  selectPlan: (plan: 'monthly' | 'yearly') => {
-    set(state => ({
-      user: state.user ? { ...state.user, subscriptionPlan: plan } : null,
-      currentStep: 'payment'
-    }));
-  },
-
-  skipSubscription: () => {
-    set({ currentStep: 'complete' });
-  },
-
-  // Payment step
-  processPayment: async (paymentData: any) => {
+  sendMagicLink: async (email, tenantId) => {
     set({ isLoading: true, error: null });
-    
     try {
-      // Simulate Stripe payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      set(state => ({
-        user: state.user ? {
-          ...state.user,
-          hasSubscription: true,
-          trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
-        } : null,
-        currentStep: 'complete',
-        isLoading: false
-      }));
-      
-    } catch (error) {
-      set({ 
-        error: 'Payment failed. Please try again.',
-        isLoading: false 
+      await authApi.sendMagicLink(email, tenantId);
+      set({ isLoading: false });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Failed to send magic link',
+        isLoading: false,
       });
+      throw err;
     }
   },
 
-  // General actions
-  setLoading: (loading: boolean) => set({ isLoading: loading }),
-  
-  setError: (error: string | null) => set({ error }),
-  
+  verifyMagicLink: async (token) => {
+    set({ isLoading: true, error: null });
+    try {
+      const user = await authApi.verifyMagicLink(token);
+      persistUser(user);
+      useTenantStore.getState().loadTenantsForUser(user.id);
+      set({ user, isLoading: false });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Invalid or expired link',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  sendPasswordReset: async (email, tenantId) => {
+    set({ isLoading: true, error: null });
+    try {
+      await authApi.sendPasswordReset(email, tenantId);
+      set({ isLoading: false });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Failed to send reset email',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  resetPassword: async (token, newPassword) => {
+    set({ isLoading: true, error: null });
+    try {
+      await authApi.resetPassword(token, newPassword);
+      set({ isLoading: false });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Invalid or expired reset link',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  verifyEmail: async (token) => {
+    set({ isLoading: true, error: null });
+    try {
+      const user = await authApi.verifyEmail(token);
+      persistUser(user);
+      set({ user, isLoading: false, pendingEmailVerification: false });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Invalid or expired verification link',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  setupMFA: async (userId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { secret, qrDataUrl } = await authApi.setupMFA(userId);
+      set({ mfaSecret: secret, mfaQrDataUrl: qrDataUrl, isLoading: false });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Failed to setup MFA',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  confirmMFA: async (userId, code) => {
+    set({ isLoading: true, error: null });
+    try {
+      await authApi.confirmMFA(userId, code);
+      const { user } = get();
+      if (user) {
+        const updated = { ...user, twoFactorEnabled: true };
+        persistUser(updated);
+        set({ user: updated, mfaSecret: undefined, mfaQrDataUrl: undefined, isLoading: false });
+      }
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Invalid code',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  verifyMFA: async (userId, code) => {
+    set({ isLoading: true, error: null });
+    try {
+      const valid = await authApi.verifyMFA(userId, code);
+      if (!valid) {
+        set({ error: 'Invalid code', isLoading: false });
+        throw new Error('Invalid code');
+      }
+      const { user } = get();
+      if (user) {
+        const updated = { ...user, isAuthenticated: true };
+        persistUser(updated);
+        useTenantStore.getState().loadTenantsForUser(user.id);
+        set({ user: updated, pendingMFA: false, isLoading: false });
+      }
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Invalid code',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  setError: (error) => set({ error }),
+  clearError: () => set({ error: null }),
+
   logout: () => {
+    persistUser(null);
+    useTenantStore.getState().clearTenants();
     set({
       user: null,
-      currentStep: 'email',
-      emailSent: false,
-      testimonialsShown: false,
-      error: null
+      error: null,
+      pendingMFA: false,
+      pendingEmailVerification: false,
+      mfaSecret: undefined,
+      mfaQrDataUrl: undefined,
     });
   },
 
+  completeTestimonials: () => set({}),
+  selectPlan: () => set({}),
+  skipSubscription: () => set({}),
+
   initialize: async () => {
     set({ isInitializing: true });
-    
     try {
-      // Check for existing session
-      const savedUser = localStorage.getItem('inkid_user');
-      const savedStep = localStorage.getItem('inkid_step');
-      
-      if (savedUser) {
-        const user = JSON.parse(savedUser);
-        set({ 
-          user,
-          currentStep: savedStep as any || 'email',
-          isInitializing: false
-        });
+      const user = loadPersistedUser();
+      if (user) {
+        useTenantStore.getState().loadTenantsForUser(user.id);
+        set({ user, isInitializing: false });
       } else {
         set({ isInitializing: false });
       }
-    } catch (error) {
+    } catch {
       set({ isInitializing: false });
     }
-  }
-})); 
+  },
+}));

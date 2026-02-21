@@ -50,7 +50,7 @@ export const SubscriptionStep: React.FC = () => {
           
           <button 
             className={styles.chooseButton}
-            onClick={() => selectPlan('monthly')}
+            onClick={() => selectPlan?.('monthly')}
           >
             Choose monthly
           </button>
@@ -92,7 +92,7 @@ export const SubscriptionStep: React.FC = () => {
           
           <button 
             className={styles.chooseButton}
-            onClick={() => selectPlan('yearly')}
+            onClick={() => selectPlan?.('yearly')}
           >
             Choose yearly and save 20%
           </button>
@@ -100,7 +100,7 @@ export const SubscriptionStep: React.FC = () => {
       </div>
 
       <div className={styles.skipSection}>
-        <button className={styles.skipButton} onClick={skipSubscription}>
+        <button className={styles.skipButton} onClick={() => skipSubscription?.()}>
           Cancel anytime before your trial ends
         </button>
         <button className={styles.skipButton}>

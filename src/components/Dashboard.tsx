@@ -63,7 +63,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <div className={styles.stat}>
               <span className={styles.statLabel}>Email Verified</span>
               <span className={styles.statValue}>
-                {user.emailVerified ? 'Yes' : 'No'}
+                {user.isEmailVerified ? 'Yes' : 'No'}
               </span>
             </div>
             <div className={styles.stat}>

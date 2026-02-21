@@ -41,7 +41,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         whileHover={!isDisabled ? { scale: 1.02 } : {}}
         whileTap={!isDisabled ? { scale: 0.98 } : {}}
         transition={{ duration: 0.1 }}
-        {...props}
+        {...(props as React.ComponentProps<typeof motion.button>)}
       >
         {loading && (
           <motion.div

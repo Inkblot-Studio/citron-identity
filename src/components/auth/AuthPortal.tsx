@@ -1,95 +1,96 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SocialLoginButtons } from './SocialLoginButtons';
+import { useAuthStore } from '@/store/auth';
+import { DEFAULT_TENANT_ID } from '@/mocks/tenants';
 import styles from './AuthPortal.module.scss';
 
 export const AuthPortal: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, pendingMFA, login, sendMagicLink, isLoading, error, clearError } = useAuthStore();
+
+  useEffect(() => {
+    if (user?.isAuthenticated && !pendingMFA) {
+      navigate('/dashboard', { replace: true });
+    } else if (pendingMFA && user) {
+      navigate('/mfa/verify', { replace: true });
+    }
+  }, [user, pendingMFA, navigate]);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isBackgroundBlurred, setIsBackgroundBlurred] = useState(false);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [emailError, setEmailError] = useState('');
-  const [isValidating, setIsValidating] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isPasswordless, setIsPasswordless] = useState(false);
 
   useEffect(() => {
-    // Start both blur and form animation simultaneously after a shorter delay
     const timer = setTimeout(() => {
       setIsBackgroundBlurred(true);
       setIsFormVisible(true);
     }, 800);
-
     return () => clearTimeout(timer);
   }, []);
 
-  // Email validation
   const validateEmail = (email: string): string => {
     if (!email) return '';
-    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address';
-    }
-    
-    if (email.length > 254) {
-      return 'Email address is too long';
-    }
-    
+    if (!emailRegex.test(email)) return 'Please enter a valid email address';
+    if (email.length > 254) return 'Email address is too long';
     const [localPart, domain] = email.split('@');
-    if (localPart.length > 64 || domain.length > 253) {
-      return 'Email address format is invalid';
-    }
-    
+    if (localPart.length > 64 || domain.length > 253) return 'Email address format is invalid';
     return '';
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     setEmail(newEmail);
-    
-    // Set typing state for blur effect
     setIsTyping(newEmail.length > 0);
-    
-    // Clear error when user starts typing
-    if (emailError) {
-      setEmailError('');
-    }
+    if (emailError) setEmailError('');
+    if (error) clearError();
   };
 
-  const handleEmailSubmit = async () => {
-    if (!email.trim()) {
-      setEmailError('Please enter your email address');
-      return;
-    }
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (error) clearError();
+  };
 
-    const error = validateEmail(email);
-    if (error) {
-      setEmailError(error);
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const emailErr = validateEmail(email);
+    if (emailErr) {
+      setEmailError(emailErr);
       return;
     }
 
     try {
-      // Simulate email submission
-      console.log('Magic link email sent to:', email);
-      // In real implementation, this would send a magic link email
-      // await sendMagicLink(email);
-    } catch (error) {
-      setEmailError('Failed to send email. Please try again.');
+      if (isPasswordless) {
+        await sendMagicLink(email, DEFAULT_TENANT_ID);
+        setEmailError('');
+      } else {
+        if (!password.trim()) {
+          setEmailError('Please enter your password');
+          return;
+        }
+        await login(email, password, DEFAULT_TENANT_ID);
+      }
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : 'Something went wrong');
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && email.trim()) {
-      handleEmailSubmit();
+      handleSubmit();
     }
   };
 
   const handleGoogleSignIn = async () => {
     try {
-      // In real implementation, this would integrate with Google OAuth
       console.log('Google sign-in initiated');
-      // await signInWithGoogle();
-    } catch (error) {
-      console.error('Google sign-in failed:', error);
+    } catch (err) {
+      console.error('Google sign-in failed', err);
     }
   };
 
@@ -98,61 +99,106 @@ export const AuthPortal: React.FC = () => {
       <div className={styles.background}>
         <div className={`${styles.backgroundImage} ${isBackgroundBlurred ? styles.blurred : ''}`} />
       </div>
-      
+
       <div className={`${styles.content} ${isFormVisible ? styles.visible : ''}`}>
         <div className={`${styles.header} ${isTyping ? styles.blurred : ''}`}>
           <h1 className={styles.title}>
-            Login to <span className={styles.titleBrand}>InkID</span>
+            Sign in to <span className={styles.titleBrand}>Citron</span>
           </h1>
           <p className={styles.subtitle}>
-            If you gained access to InkID, you can enter your email or login with your Google account.
+            One account for all your apps. Enter your email or sign in with Google.
           </p>
         </div>
 
-        <div className={styles.form}>
+        <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.emailInput}>
-            <div className={`${styles.inputWrapper} ${isFocused ? styles.focused : ''} ${emailError ? styles.error : ''}`}>
-              <input
-                type="email"
-                className={styles.input}
-                placeholder="account email"
-                value={email}
-                onChange={handleEmailChange}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                onKeyPress={handleKeyPress}
-              />
-              <button
-                className={styles.submitButton}
-                onClick={handleEmailSubmit}
-                disabled={!email.trim() || !!emailError}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </button>
+            <div className={`${styles.inputGroup} ${isFocused ? styles.focused : ''} ${emailError ? styles.error : ''}`}>
+              <div className={styles.inputRow}>
+                <input
+                  type="email"
+                  className={styles.input}
+                  placeholder="account email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  onKeyPress={handleKeyPress}
+                />
+              </div>
+              {!isPasswordless && (
+                <div className={styles.inputRow}>
+                  <input
+                    type="password"
+                    className={styles.input}
+                    placeholder="password"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                  />
+                </div>
+              )}
+              <div className={styles.submitRow}>
+                <button
+                  type="submit"
+                  className={styles.submitButton}
+                  disabled={!email.trim() || !!emailError || (!isPasswordless && !password.trim()) || isLoading}
+                >
+                  {isLoading ? (
+                    <span className={styles.spinner} />
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             {emailError && (
-              <div className={styles.errorMessage}>
-                {emailError}
-              </div>
+              <div className={styles.errorMessage}>{emailError}</div>
+            )}
+          </div>
+
+          <div className={styles.options}>
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={() => { setIsPasswordless(!isPasswordless); setEmailError(''); clearError(); }}
+            >
+              {isPasswordless ? 'Use password' : 'Use magic link'}
+            </button>
+            {!isPasswordless && (
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={() => navigate('/forgot-password')}
+              >
+                Forgot password?
+              </button>
             )}
           </div>
 
           <div className={`${styles.socialLoginContainer} ${isTyping ? styles.blurred : ''}`}>
             <SocialLoginButtons onGoogleSignIn={handleGoogleSignIn} />
           </div>
-        </div>
+        </form>
       </div>
 
       <div className={`${styles.bottomContainer} ${isFormVisible ? styles.visible : ''}`}>
-        <div className={styles.separator}></div>
+        <div className={styles.separator} />
         <div className={styles.footer}>
           <p className={styles.footerText}>
-            Don't have an account yet? <a href="#" className={styles.footerLink}>Sign up.</a>
+            Don&apos;t have an account?{' '}
+            <button
+              type="button"
+              className={styles.footerLink}
+              onClick={() => navigate('/signup')}
+            >
+              Sign up
+            </button>
           </p>
         </div>
       </div>
     </div>
   );
-}; 
+};

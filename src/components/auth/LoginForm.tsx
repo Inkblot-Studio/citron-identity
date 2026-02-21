@@ -18,11 +18,13 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
+  tenantId: string;
   onSwitchToSignup: () => void;
   onForgotPassword: () => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({
+  tenantId,
   onSwitchToSignup,
   onForgotPassword,
 }) => {
@@ -44,11 +46,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const onSubmit = async (data: LoginFormData) => {
     try {
       if (isPasswordless) {
-        await sendMagicLink(data.email);
+        await sendMagicLink(data.email, tenantId);
       } else {
-        await login(data.email, data.password);
+        await login(data.email, data.password, tenantId);
       }
-    } catch (error) {
+    } catch {
       // Error is handled by the store
     }
   };
@@ -171,7 +173,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <span>or continue with</span>
       </div>
 
-      <SocialLoginButtons />
+      <SocialLoginButtons onGoogleSignIn={async () => {
+        // Mock Google sign-in - in production would use OAuth
+        console.log('Google sign-in for tenant:', tenantId);
+      }} />
 
       <div className={styles.footer}>
         <p>

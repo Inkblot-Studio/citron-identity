@@ -48,7 +48,7 @@ export const TestimonialsStep: React.FC = () => {
         clearInterval(interval);
         // Complete testimonials after showing all
         setTimeout(() => {
-          completeTestimonials();
+          completeTestimonials?.();
         }, 2000);
       }
     }, 800);
