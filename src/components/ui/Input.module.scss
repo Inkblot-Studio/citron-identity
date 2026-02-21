@@ -35,7 +35,7 @@
 
   &.focused {
     border-color: var(--color-lime);
-    box-shadow: 0 0 0 3px rgba(var(--color-lime-rgb), 0.1), var(--shadow-sm);
+    box-shadow: 0 0 0 3px rgba(var(--color-lime-rgb), 0.15), var(--shadow-sm);
     background: var(--color-bg-primary);
   }
 
@@ -77,12 +77,12 @@
 
 .input {
   flex: 1;
-  background: transparent;
+  background: transparent !important;
   border: none;
   outline: none;
   color: var(--color-text-primary);
   font-size: inherit;
-  line-height: 1;
+  line-height: 1.5;
   font-family: inherit;
 
   &::placeholder {
@@ -93,6 +93,14 @@
   &:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+  }
+
+  /* Override ugly autofill background */
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: var(--color-text-primary) !important;
   }
 }
 
