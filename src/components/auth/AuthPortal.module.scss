@@ -185,8 +185,8 @@
   }
 
   &.error {
-    border-color: rgba(239, 68, 68, 0.4);
-    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(var(--color-error-rgb), 0.4);
+    background: rgba(var(--color-error-rgb), 0.05);
   }
 }
 
@@ -194,7 +194,7 @@
   position: absolute;
   top: -24px;
   left: 4px;
-  color: rgba(239, 68, 68, 0.8);
+  color: var(--color-error);
   font-size: 13px;
   font-family: 'Outfit', sans-serif;
   font-weight: 400;

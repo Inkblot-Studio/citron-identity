@@ -1,0 +1,26 @@
+---
+description: Citron design system token usage for InkID
+globs: **/*.scss,**/*.css
+alwaysApply: false
+---
+
+# Citron Design System
+
+This project uses `@citron-systems/citron-ds` as the design token source. All styling should reference tokens from `src/styles/tokens.scss`.
+
+## Token Aliases
+
+- **Accent**: `--color-lime`, `--color-lime-light`, `--color-lime-dark`
+- **Semantic**: `--color-text-primary`, `--color-bg-primary`, `--color-border-focus`
+- **Spacing**: `--space-1` through `--space-32` (maps to `--inkblot-spacing-*`)
+- **Typography**: `--font-size-*`, `--font-weight-*`, `--line-height-*`
+- **Radius**: `--radius-sm` through `--radius-full`
+- **Transitions**: `--transition-fast`, `--transition-smooth`
+
+## For rgba() with tokens
+
+Use RGB variables: `rgba(var(--color-lime-rgb), 0.1)` or `rgba(var(--color-error-rgb), 0.2)`.
+
+## Direct citron-ds tokens
+
+When needed, use raw `--inkblot-*` variables from the package (see `node_modules/@citron-systems/citron-ds/dist/css/inkblot-variables.css`).

@@ -35,23 +35,23 @@
 
   &.focused {
     border-color: var(--color-lime);
-    box-shadow: 0 0 0 3px rgba(152, 201, 60, 0.1), var(--shadow-sm);
+    box-shadow: 0 0 0 3px rgba(var(--color-lime-rgb), 0.1), var(--shadow-sm);
     background: var(--color-bg-primary);
   }
 
   &.error {
     border-color: var(--color-error);
-    
+
     &.focused {
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1), var(--shadow-sm);
+      box-shadow: 0 0 0 3px rgba(190, 62, 53, 0.1), var(--shadow-sm);
     }
   }
 
   &.success {
     border-color: var(--color-success);
-    
+
     &.focused {
-      box-shadow: 0 0 0 3px rgba(42, 146, 69, 0.1), var(--shadow-sm);
+      box-shadow: 0 0 0 3px rgba(53, 140, 70, 0.1), var(--shadow-sm);
     }
   }
 
@@ -176,23 +176,23 @@
 
     &.focused {
       border-color: var(--color-lime);
-      box-shadow: 0 0 0 3px rgba(152, 201, 60, 0.2), var(--shadow-sm);
+      box-shadow: 0 0 0 3px rgba(var(--color-lime-rgb), 0.2), var(--shadow-sm);
       background: var(--color-bg-primary);
     }
 
     &.error {
       border-color: var(--color-error);
-      
+
       &.focused {
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2), var(--shadow-sm);
+        box-shadow: 0 0 0 3px rgba(190, 62, 53, 0.2), var(--shadow-sm);
       }
     }
 
     &.success {
       border-color: var(--color-success);
-      
+
       &.focused {
-        box-shadow: 0 0 0 3px rgba(42, 146, 69, 0.2), var(--shadow-sm);
+        box-shadow: 0 0 0 3px rgba(53, 140, 70, 0.2), var(--shadow-sm);
       }
     }
   }

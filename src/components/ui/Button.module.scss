@@ -95,7 +95,7 @@
     border-color: var(--color-lime);
 
     &:hover:not(.disabled) {
-      background: rgba(152, 201, 60, 0.1);
+      background: rgba(var(--color-lime-rgb), 0.1);
       border-color: var(--color-lime-light);
       color: var(--color-lime-light);
       transform: translateY(-1px);
@@ -103,7 +103,7 @@
     }
 
     &:active:not(.disabled) {
-      background: rgba(152, 201, 60, 0.15);
+      background: rgba(var(--color-lime-rgb), 0.15);
       border-color: var(--color-lime-dark);
       color: var(--color-lime-dark);
       transform: translateY(0);
@@ -216,13 +216,13 @@
 
     &.outline {
       &:hover:not(.disabled) {
-        background: rgba(152, 201, 60, 0.15);
+        background: rgba(var(--color-lime-rgb), 0.15);
         border-color: var(--color-lime-light);
         color: var(--color-lime-light);
       }
 
       &:active:not(.disabled) {
-        background: rgba(152, 201, 60, 0.2);
+        background: rgba(var(--color-lime-rgb), 0.2);
         border-color: var(--color-lime-dark);
         color: var(--color-lime-dark);
       }

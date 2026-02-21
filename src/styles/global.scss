@@ -194,7 +194,7 @@ textarea {
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(152, 201, 60, 0.1),
+      rgba(var(--color-lime-rgb), 0.1),
       transparent
     );
     animation: shimmer 1.5s infinite;
