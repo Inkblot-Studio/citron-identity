@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthPageLayout } from '@/components/auth/AuthPageLayout';
+import { getPendingRedirectUri, clearPendingRedirectUri, buildRedirectUrl } from '@/lib/redirect';
 
 export const MFAVerifyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +16,13 @@ export const MFAVerifyPage: React.FC = () => {
     if (!user?.id || !code) return;
     try {
       await verifyMFA(user.id, code);
-      navigate('/dashboard', { replace: true });
+      const redirectUri = getPendingRedirectUri();
+      if (redirectUri) {
+        clearPendingRedirectUri();
+        window.location.href = buildRedirectUrl(redirectUri);
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch {
       // Error in store
     }

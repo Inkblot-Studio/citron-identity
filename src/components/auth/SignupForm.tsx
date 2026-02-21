@@ -46,7 +46,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
   });
 
   const email = watch('email');
-  const password = watch('password');
+  const password = watch('password') ?? '';
 
   // Auto-generate username when email changes
   useEffect(() => {
@@ -56,11 +56,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
     }
   }, [email, setValue, watch]);
 
-  // Check password strength
+  // Check password strength when password changes
   useEffect(() => {
-    if (password) {
-      setPasswordStrength(getPasswordStrength(password));
-    }
+    setPasswordStrength(password ? getPasswordStrength(password) : { score: 0, feedback: [] });
   }, [password]);
 
   const onSubmit = async (data: SignupFormData) => {
@@ -78,9 +76,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
   };
 
   const getPasswordStrengthColor = (score: number) => {
-    if (score <= 2) return 'var(--color-error-500)';
-    if (score <= 3) return 'var(--color-warning-500)';
-    return 'var(--color-success-500)';
+    if (score <= 2) return 'var(--color-error)';
+    if (score <= 3) return 'var(--color-warning)';
+    return 'var(--color-success)';
   };
 
   const getPasswordStrengthText = (score: number) => {
@@ -97,19 +95,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className={styles.header}>
-        <h1 className={styles.title}>Create your account</h1>
-        <p className={styles.subtitle}>
-          Join InkID to access all Inkblot Studio applications
-        </p>
-      </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
         <Input
           label="Full name"
           type="text"
           placeholder="Enter your full name"
-          leftIcon={<User size={16} />}
+          leftIcon={<User size={20} />}
           fullWidth
           error={errors.name?.message}
           {...register('name')}
@@ -236,9 +227,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ tenantId, onSwitchToLogi
         <span>or continue with</span>
       </div>
 
-      <SocialLoginButtons onGoogleSignIn={async () => {
-        console.log('Google sign-in for tenant:', tenantId);
-      }} />
+      <SocialLoginButtons
+        onGoogleSignIn={async () => console.log('Google sign-in for tenant:', tenantId)}
+        onAppleSignIn={async () => console.log('Apple sign-in for tenant:', tenantId)}
+        onMicrosoftSignIn={async () => console.log('Microsoft sign-in for tenant:', tenantId)}
+      />
 
       <div className={styles.footer}>
         <p>

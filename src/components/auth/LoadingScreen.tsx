@@ -62,7 +62,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                 delay: 0.3
               }}
             >
-              <img src="/src/assets/images/logo_white.svg" alt="InkID Logo" />
+              <img src="/src/assets/images/logo_white.svg" alt="IS" />
             </motion.div>
           </motion.div>
         </motion.div>

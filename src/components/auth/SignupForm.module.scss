@@ -70,8 +70,9 @@
 
 .strengthFill {
   height: 100%;
+  min-width: 4px;
   border-radius: var(--radius-full);
-  transition: all var(--transition-smooth);
+  transition: width var(--transition-normal);
 }
 
 .strengthInfo {
@@ -148,8 +149,12 @@
 }
 
 .footer {
+  position: relative;
+  z-index: 1;
   text-align: center;
   margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  background: var(--color-bg-primary);
 
   p {
     color: var(--color-text-secondary);

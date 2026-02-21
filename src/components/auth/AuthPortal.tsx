@@ -1,17 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import { useAuthStore } from '@/store/auth';
 import { DEFAULT_TENANT_ID } from '@/mocks/tenants';
+import {
+  getRedirectUriFromSearch,
+  setPendingRedirectUri,
+  getPendingRedirectUri,
+  clearPendingRedirectUri,
+  buildRedirectUrl,
+} from '@/lib/redirect';
 import styles from './AuthPortal.module.scss';
 
 export const AuthPortal: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, pendingMFA, login, sendMagicLink, isLoading, error, clearError } = useAuthStore();
+
+  // Capture redirect_uri from URL on mount (e.g. from Domain A)
+  useEffect(() => {
+    const redirectUri = getRedirectUriFromSearch(location.search);
+    if (redirectUri) setPendingRedirectUri(redirectUri);
+  }, [location.search]);
 
   useEffect(() => {
     if (user?.isAuthenticated && !pendingMFA) {
-      navigate('/dashboard', { replace: true });
+      const redirectUri = getPendingRedirectUri();
+      if (redirectUri) {
+        clearPendingRedirectUri();
+        window.location.href = buildRedirectUrl(redirectUri);
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } else if (pendingMFA && user) {
       navigate('/mfa/verify', { replace: true });
     }
@@ -73,7 +93,7 @@ export const AuthPortal: React.FC = () => {
           setEmailError('Please enter your password');
           return;
         }
-        await login(email, password, DEFAULT_TENANT_ID);
+        await login(email.trim(), password.trim(), DEFAULT_TENANT_ID);
       }
     } catch (err) {
       setEmailError(err instanceof Error ? err.message : 'Something went wrong');
@@ -94,6 +114,22 @@ export const AuthPortal: React.FC = () => {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    try {
+      console.log('Apple sign-in initiated');
+    } catch (err) {
+      console.error('Apple sign-in failed', err);
+    }
+  };
+
+  const handleMicrosoftSignIn = async () => {
+    try {
+      console.log('Microsoft sign-in initiated');
+    } catch (err) {
+      console.error('Microsoft sign-in failed', err);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.background}>
@@ -103,7 +139,7 @@ export const AuthPortal: React.FC = () => {
       <div className={`${styles.content} ${isFormVisible ? styles.visible : ''}`}>
         <div className={`${styles.header} ${isTyping ? styles.blurred : ''}`}>
           <h1 className={styles.title}>
-            Sign in to <span className={styles.titleBrand}>Citron</span>
+            Sign in to <span className={styles.titleBrand}>IS</span>
           </h1>
           <p className={styles.subtitle}>
             One account for all your apps. Enter your email or sign in with Google.
@@ -179,7 +215,11 @@ export const AuthPortal: React.FC = () => {
           </div>
 
           <div className={`${styles.socialLoginContainer} ${isTyping ? styles.blurred : ''}`}>
-            <SocialLoginButtons onGoogleSignIn={handleGoogleSignIn} />
+            <SocialLoginButtons
+              onGoogleSignIn={handleGoogleSignIn}
+              onAppleSignIn={handleAppleSignIn}
+              onMicrosoftSignIn={handleMicrosoftSignIn}
+            />
           </div>
         </form>
       </div>

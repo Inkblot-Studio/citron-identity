@@ -1,23 +1,22 @@
 .container {
   width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.googleText {
+.toggle {
   background: none;
   border: none;
-  color: var(--color-text-secondary);
-  font-size: 15px;
+  color: var(--color-text-tertiary);
+  font-size: 14px;
   font-weight: 400;
-  cursor: pointer;
-  transition: color 0.15s ease;
   font-family: 'Outfit', sans-serif;
-  padding: 0;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  cursor: pointer;
+  padding: var(--space-2) 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
 
   &:hover {
     color: var(--color-lime-dark);
@@ -30,41 +29,77 @@
   }
 }
 
-.googleLogo {
+.scrollTrack {
+  width: 100%;
+  max-height: 130px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  // Hide scrollbar
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.socialButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  scroll-snap-align: start;
   flex-shrink: 0;
-}
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 
-// Loading state
-.loading {
-  .icon {
-    animation: spin 1s linear infinite;
+  &:hover {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-secondary);
+    color: var(--color-lime-dark);
   }
-}
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
   }
 }
 
-// Responsive design
-@media (max-width: 640px) {
-  .socialButton {
-    height: 48px;
-    font-size: var(--font-size-sm);
-    gap: var(--space-2);
-  }
+.socialLogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--color-text-primary);
+}
 
-  .icon {
-    width: 20px;
-    height: 20px;
-  }
+.socialLabel {
+  white-space: nowrap;
 } 

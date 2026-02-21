@@ -6,7 +6,7 @@ export const MOCK_TENANTS: Tenant[] = [
   {
     id: 'citron',
     slug: 'citron',
-    name: 'Citron',
+    name: 'IS',
     primaryColor: '#c4a030',
     redirectUrl: '/',
     allowedAppIds: [],

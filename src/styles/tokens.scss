@@ -1,5 +1,5 @@
-// InkID Authentication Portal — Citron Design System
-// All design tokens sourced from @citron-systems/citron-ds
+// IS (Identity Service) — Design tokens from @citron-systems/citron-ds
+// Used across all product lines
 // Base tokens (inkblot-variables.css) are imported in global.css to avoid Sass @import deprecation
 
 // =============================================================================
@@ -123,6 +123,13 @@
   --line-height-tight: var(--inkblot-typography-line-height-tight);
   --line-height-normal: var(--inkblot-typography-line-height-normal);
   --line-height-relaxed: var(--inkblot-typography-line-height-relaxed);
+
+  // Icon sizes (from citron-ds)
+  --size-icon-xs: var(--inkblot-size-icon-xs);
+  --size-icon-sm: var(--inkblot-size-icon-sm);
+  --size-icon-md: var(--inkblot-size-icon-md);
+  --size-icon-lg: var(--inkblot-size-icon-lg);
+  --size-icon-xl: var(--inkblot-size-icon-xl);
 
   // Radius
   --radius-none: var(--inkblot-radius-none);

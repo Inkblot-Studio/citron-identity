@@ -129,8 +129,12 @@
 }
 
 .footer {
+  position: relative;
+  z-index: 1;
   text-align: center;
   margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  background: var(--color-bg-primary);
 
   p {
     color: var(--color-text-secondary);

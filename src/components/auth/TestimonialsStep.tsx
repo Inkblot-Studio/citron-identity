@@ -7,28 +7,28 @@ const testimonials = [
     id: 1,
     name: 'Lachy Groom',
     title: 'Investor. Co-founder of Physical Intelligence',
-    quote: 'The team at InkID truly masters the details. Their products are both beautiful and incredibly functional, showing just how much they care about getting everything right.',
+    quote: 'The team at IS truly masters the details. Their products are both beautiful and incredibly functional, showing just how much they care about getting everything right.',
     avatar: '👨‍💼'
   },
   {
     id: 2,
     name: 'Guillermo Rauch',
     title: 'CEO at Vercel',
-    quote: 'InkID is one of my favorite design and product teams out there. I love how they always share how the sausage is made.',
+    quote: 'IS is one of my favorite design and product teams out there. I love how they always share how the sausage is made.',
     avatar: '👨‍💻'
   },
   {
     id: 3,
     name: 'Stammy',
     title: 'Co-Founder at Limitless AI',
-    quote: 'I love InkID so much. Such a well-crafted identity provider. Even if you don\'t use it frequently it\'s worth checking out for the polish alone.',
+    quote: 'I love IS so much. Such a well-crafted identity provider. Even if you don\'t use it frequently it\'s worth checking out for the polish alone.',
     avatar: '👨‍🔬'
   },
   {
     id: 4,
     name: 'Zeno Rocha',
     title: 'Founder & CEO at Resend',
-    quote: 'InkID is one of my favorite software teams, building one of the most beautifully designed products on the market.',
+    quote: 'IS is one of my favorite software teams, building one of the most beautifully designed products on the market.',
     avatar: '👨‍🚀'
   }
 ];
@@ -68,7 +68,7 @@ export const TestimonialsStep: React.FC = () => {
           <div className={styles.stepIndicator}>Step 1 of 3</div>
           <h1 className={styles.title}>Among the brightest minds</h1>
           <p className={styles.subtitle}>
-            From casual users to pros, you inspire us. That's why so many choose InkID, and we're excited to have you on board.
+            From casual users to pros, you inspire us. That's why so many choose IS, and we're excited to have you on board.
           </p>
         </div>
 

@@ -47,7 +47,7 @@ export const SignupPage: React.FC = () => {
   return (
     <AuthPageLayout
       title="Create your account"
-      subtitle="One Citron account for all your apps."
+      subtitle="One IS account for all your apps."
     >
       <SignupForm tenantId={DEFAULT_TENANT_ID} onSwitchToLogin={handleSwitchToLogin} />
     </AuthPageLayout>

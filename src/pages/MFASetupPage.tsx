@@ -37,7 +37,7 @@ export const MFASetupPage: React.FC = () => {
         {mfaSecret && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
             <QRCodeSVG
-              value={`otpauth://totp/Citron:${user.email}?secret=${mfaSecret}`}
+              value={`otpauth://totp/IS:${user.email}?secret=${mfaSecret}`}
               size={160}
               level="M"
             />

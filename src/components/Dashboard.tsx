@@ -85,7 +85,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           <h2 className={styles.cardTitle}>Quick Actions</h2>
           <div className={styles.actions}>
             <Button variant="primary" fullWidth>
-              Access Inkblot Studio
+              Access apps
             </Button>
             <Button variant="outline" fullWidth>
               View Profile

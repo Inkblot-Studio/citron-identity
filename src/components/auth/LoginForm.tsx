@@ -70,7 +70,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       <div className={styles.header}>
         <h1 className={styles.title}>Welcome back</h1>
         <p className={styles.subtitle}>
-          Sign in to your InkID account to continue
+          Sign in to your IS account to continue
         </p>
       </div>
 
@@ -173,10 +173,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <span>or continue with</span>
       </div>
 
-      <SocialLoginButtons onGoogleSignIn={async () => {
-        // Mock Google sign-in - in production would use OAuth
-        console.log('Google sign-in for tenant:', tenantId);
-      }} />
+      <SocialLoginButtons
+        onGoogleSignIn={async () => console.log('Google sign-in for tenant:', tenantId)}
+        onAppleSignIn={async () => console.log('Apple sign-in for tenant:', tenantId)}
+        onMicrosoftSignIn={async () => console.log('Microsoft sign-in for tenant:', tenantId)}
+      />
 
       <div className={styles.footer}>
         <p>

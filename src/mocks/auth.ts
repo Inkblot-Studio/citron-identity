@@ -34,11 +34,14 @@ export async function mockLogin(
   tenantId: string
 ): Promise<{ user: User; requiresMfa?: boolean }> {
   await delay();
-  const mockUser = findUserByEmailOrSignedUp(email);
-  if (!mockUser || mockUser.password !== password) {
+  const trimmedEmail = email?.trim() ?? '';
+  const trimmedPassword = password?.trim() ?? '';
+  const mockUser = findUserByEmailOrSignedUp(trimmedEmail);
+  if (!mockUser || mockUser.password !== trimmedPassword) {
     throw new Error('Invalid email or password');
   }
-  const tenant = mockUser.tenants.find((t) => t.tenantId === tenantId || t.tenantId === 'citron');
+  const trimmedTenantId = tenantId?.trim() || 'citron';
+  const tenant = mockUser.tenants.find((t) => t.tenantId === trimmedTenantId || t.tenantId === 'citron');
   if (!tenant) {
     throw new Error('Invalid email or password');
   }
