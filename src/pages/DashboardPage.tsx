@@ -2,8 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useTenantStore } from '@/store/tenant';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuthStore();
   const { currentTenant, availableTenants, setTenant } = useTenantStore();
@@ -17,7 +15,7 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-[var(--inkblot-dark-color-background-primary)] p-6" data-theme="dark">
+    <div className="min-h-screen p-6" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
       <div className="fixed top-4 right-4 z-50 flex gap-2">
         {availableTenants.length > 1 && (
           <select
@@ -26,7 +24,8 @@ export const DashboardPage: React.FC = () => {
               const t = availableTenants.find((x) => x.id === e.target.value);
               if (t) setTenant(t);
             }}
-            className="px-3 py-2 rounded-lg border border-neutral-200 dark:border-[var(--inkblot-dark-color-border-default)] bg-white dark:bg-[var(--inkblot-dark-color-background-secondary)] text-neutral-900 dark:text-[var(--inkblot-dark-color-text-primary)]"
+            className="px-3 py-2 rounded-lg border bg-white text-neutral-900"
+            style={{ borderColor: 'var(--color-border-primary)' }}
           >
             {availableTenants.map((t) => (
               <option key={t.id} value={t.id}>
@@ -35,11 +34,10 @@ export const DashboardPage: React.FC = () => {
             ))}
           </select>
         )}
-        <ThemeToggle />
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8 pb-6 border-b border-neutral-200 dark:border-[var(--inkblot-dark-color-border-default)]">
+        <div className="mb-8 pb-6 border-b" style={{ borderColor: 'var(--color-border-primary)' }}>
           <div className="flex items-center gap-4">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl"
@@ -48,10 +46,10 @@ export const DashboardPage: React.FC = () => {
               {user.name?.charAt(0) ?? user.email.charAt(0)}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-neutral-900 dark:text-[var(--inkblot-dark-color-text-primary)]">
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 Welcome, {user.name ?? user.email}
               </h1>
-              <p className="text-neutral-500 dark:text-[var(--inkblot-dark-color-text-secondary)]">
+              <p className="text-neutral-500" style={{ color: 'var(--color-text-secondary)' }}>
                 {user.email}
               </p>
             </div>
@@ -59,19 +57,19 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 mb-8">
-          <div className="p-4 rounded-xl border border-neutral-200 dark:border-[var(--inkblot-dark-color-border-default)] bg-white dark:bg-[var(--inkblot-dark-color-background-secondary)]">
-            <h3 className="font-semibold text-neutral-900 dark:text-[var(--inkblot-dark-color-text-primary)] mb-1">
+          <div className="p-4 rounded-xl border bg-white" style={{ borderColor: 'var(--color-border-primary)' }}>
+            <h3 className="font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
               Email verified
             </h3>
-            <p className="text-sm text-neutral-500 dark:text-[var(--inkblot-dark-color-text-secondary)]">
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               {user.isEmailVerified ? 'Yes' : 'No'}
             </p>
           </div>
-          <div className="p-4 rounded-xl border border-neutral-200 dark:border-[var(--inkblot-dark-color-border-default)] bg-white dark:bg-[var(--inkblot-dark-color-background-secondary)]">
-            <h3 className="font-semibold text-neutral-900 dark:text-[var(--inkblot-dark-color-text-primary)] mb-1">
+          <div className="p-4 rounded-xl border bg-white" style={{ borderColor: 'var(--color-border-primary)' }}>
+            <h3 className="font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
               Two-factor authentication
             </h3>
-            <p className="text-sm text-neutral-500 dark:text-[var(--inkblot-dark-color-text-secondary)]">
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               {user.twoFactorEnabled ? 'Enabled' : 'Disabled'}
             </p>
           </div>

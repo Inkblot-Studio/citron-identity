@@ -41,7 +41,7 @@ export const MFASetupPage: React.FC = () => {
               size={160}
               level="M"
             />
-            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fey-text-secondary)' }}>
+            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
               Or enter manually: <code style={{ fontFamily: 'monospace' }}>{mfaSecret}</code>
             </p>
           </div>

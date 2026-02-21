@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth';
-import { useTheme } from './hooks/useTheme';
 import { LoadingScreen } from './components/auth/LoadingScreen';
 import { AuthPortal } from './components/auth/AuthPortal';
 import { SignupPage } from './pages/SignupPage';
@@ -12,11 +11,9 @@ import { MFASetupPage } from './pages/MFASetupPage';
 import { MFAVerifyPage } from './pages/MFAVerifyPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProtectedRoute } from './components/routes/ProtectedRoute';
-import { ThemeToggle } from './components/ui/ThemeToggle';
 import styles from './App.module.scss';
 
 function App() {
-  const { theme, toggleTheme } = useTheme();
   const { isInitializing, initialize } = useAuthStore();
   const [showLoading, setShowLoading] = useState(true);
 
@@ -24,22 +21,13 @@ function App() {
     initialize();
   }, [initialize]);
 
-  useEffect(() => {
-    if (theme !== 'dark') {
-      toggleTheme();
-    }
-  }, [theme, toggleTheme]);
-
   if (isInitializing || showLoading) {
     return <LoadingScreen onComplete={() => setShowLoading(false)} />;
   }
 
   return (
     <BrowserRouter>
-      <div className={styles.app} data-theme={theme}>
-        <div className={styles.themeToggle}>
-          <ThemeToggle />
-        </div>
+      <div className={styles.app} data-theme="light">
         <Routes>
           <Route path="/" element={<AuthPortal />} />
           <Route path="/login" element={<AuthPortal />} />

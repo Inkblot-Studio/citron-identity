@@ -49,7 +49,7 @@
   justify-content: flex-start;
   position: relative;
   padding: var(--space-4);
-  background: var(--color-fey-black);
+  background: #ffffff;
   overflow: hidden;
   padding-top: 25vh;
 }
@@ -61,6 +61,7 @@
   right: 0;
   bottom: 0;
   z-index: 0;
+  background: #ffffff;
 }
 
 .backgroundImage {
@@ -69,17 +70,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(196, 160, 48, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(196, 160, 48, 0.08) 0%, transparent 50%),
-    linear-gradient(180deg, var(--color-fey-black) 0%, #0f0e0c 50%, #0a0a08 100%);
+  background: #ffffff;
   opacity: 1;
-  transition: all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   &.blurred {
-    filter: blur(8px) brightness(0.85) contrast(1.05);
-    transform: scale(1.02);
-    opacity: 0.95;
+    opacity: 1;
   }
 }
 
@@ -117,7 +112,7 @@
 .title {
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-fey-text);
+  color: var(--color-text-primary);
   margin-bottom: var(--space-3);
   line-height: var(--line-height-tight);
   font-family: 'Outfit', sans-serif;
@@ -132,7 +127,7 @@
 }
 
 .subtitle {
-  color: var(--color-fey-text-secondary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-base);
   line-height: var(--line-height-relaxed);
   max-width: 320px;
@@ -166,26 +161,27 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-primary);
   border-radius: 16px;
   overflow: hidden;
   backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-sm);
   transition: all 0.15s ease;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-border-secondary);
+    background: var(--color-bg-secondary);
   }
 
   &.focused {
-    border-color: rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-glow);
   }
 
   &.error {
-    border-color: rgba(var(--color-error-rgb), 0.4);
-    background: rgba(var(--color-error-rgb), 0.05);
+    border-color: rgba(var(--color-error-rgb), 0.5);
+    background: rgba(var(--color-error-rgb), 0.04);
   }
 }
 
@@ -193,7 +189,7 @@
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--color-border-primary);
 
   &:last-of-type {
     border-bottom: none;
@@ -226,14 +222,14 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #ffffff;
+  color: var(--color-text-primary);
   font-size: 15px;
   line-height: 1;
   font-family: 'Outfit', sans-serif;
   font-weight: 400;
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--color-text-tertiary);
   }
 
   &:focus {
@@ -251,16 +247,16 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-lime);
   border: none;
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-white);
   cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+    background: var(--color-lime-dark);
+    filter: brightness(1.05);
   }
 
   &:disabled {
@@ -286,7 +282,7 @@
   width: 18px;
   height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  border-top-color: var(--color-white);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -305,7 +301,7 @@
 .linkButton {
   background: none;
   border: none;
-  color: var(--color-fey-text-secondary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   cursor: pointer;
   padding: 0;
@@ -313,7 +309,7 @@
   font-family: 'Outfit', sans-serif;
 
   &:hover {
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--color-lime-dark);
   }
 }
 
@@ -346,13 +342,14 @@
   &::before {
     content: "";
     position: absolute;
-    top: 0px;
-    left: 0px;
-    right: 0px;
-    margin: 0px auto;
-    width: 514px;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 400px;
     height: 1px;
-    background: radial-gradient(50% 1.568e+07% at 50% 49.54%, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+    background: linear-gradient(90deg, transparent, var(--color-border-secondary), transparent);
   }
 }
 
@@ -363,7 +360,7 @@
 }
 
 .footerText {
-  color: var(--color-fey-text-muted);
+  color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
   font-family: 'Outfit', sans-serif;
@@ -372,7 +369,7 @@
 .footerLink {
   background: none;
   border: none;
-  color: var(--color-fey-text-secondary);
+  color: var(--color-text-secondary);
   font-weight: var(--font-weight-semibold);
   text-decoration: none;
   transition: color 0.15s ease;
@@ -381,7 +378,7 @@
   padding: 0;
 
   &:hover {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--color-lime-dark);
   }
 }
 
@@ -390,7 +387,7 @@
   margin-bottom: var(--space-4);
   background: none;
   border: none;
-  color: var(--color-fey-text-secondary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   cursor: pointer;
   padding: 0;
@@ -398,7 +395,7 @@
   font-family: 'Outfit', sans-serif;
 
   &:hover {
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--color-lime-dark);
   }
 }
 

@@ -1,19 +1,5 @@
 .app {
   min-height: 100vh;
   position: relative;
-}
-
-.themeToggle {
-  position: fixed;
-  top: var(--space-6);
-  right: var(--space-6);
-  z-index: var(--z-fixed);
-}
-
-// Responsive design
-@media (max-width: 640px) {
-  .themeToggle {
-    top: var(--space-4);
-    right: var(--space-4);
-  }
+  background: #ffffff;
 } 

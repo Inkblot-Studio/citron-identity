@@ -30,7 +30,7 @@ export const SignupPage: React.FC = () => {
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--color-fey-text-secondary)',
+              color: 'var(--color-text-secondary)',
               fontWeight: 600,
               cursor: 'pointer',
               padding: 0,

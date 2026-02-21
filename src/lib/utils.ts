@@ -116,11 +116,10 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function getInitialTheme(): 'light' | 'dark' {
   if (typeof window === 'undefined') return 'light';
-  
+  // Auth portal uses light theme by default; user can toggle if desired
   const saved = localStorage.getItem('inkid-theme') as 'light' | 'dark';
   if (saved) return saved;
-  
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'light';
 }
 
 /**

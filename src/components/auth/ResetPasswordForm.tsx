@@ -48,11 +48,11 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
   };
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-[var(--inkblot-dark-color-background-secondary)] p-6 shadow-lg">
-      <h1 className="text-2xl font-bold text-neutral-900 dark:text-[var(--inkblot-dark-color-text-primary)] mb-2">
+    <div className="rounded-2xl bg-white p-6 shadow-lg" style={{ borderColor: 'var(--color-border-primary)' }}>
+      <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
         Set new password
       </h1>
-      <p className="text-neutral-500 dark:text-[var(--inkblot-dark-color-text-secondary)] mb-6">
+      <p className="text-neutral-500 mb-6" style={{ color: 'var(--color-text-secondary)' }}>
         Enter your new password below.
       </p>
 

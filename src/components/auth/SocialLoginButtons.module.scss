@@ -7,7 +7,7 @@
 .googleText {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-text-secondary);
   font-size: 15px;
   font-weight: 400;
   cursor: pointer;
@@ -20,11 +20,11 @@
   gap: 8px;
 
   &:hover {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--color-lime-dark);
   }
 
   &:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.3);
+    outline: 2px solid var(--color-border-focus);
     outline-offset: 2px;
     border-radius: 4px;
   }

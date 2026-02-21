@@ -30,12 +30,12 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-neutral-50 dark:bg-[var(--inkblot-dark-color-background-primary)]">
+        <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
           <div className="max-w-md text-center">
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-[var(--inkblot-dark-color-text-primary)] mb-2">
+            <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
               Something went wrong
             </h1>
-            <p className="text-neutral-500 dark:text-[var(--inkblot-dark-color-text-secondary)] mb-4">
+            <p className="text-neutral-500 mb-4" style={{ color: 'var(--color-text-secondary)' }}>
               An unexpected error occurred. Please try refreshing the page.
             </p>
             <button

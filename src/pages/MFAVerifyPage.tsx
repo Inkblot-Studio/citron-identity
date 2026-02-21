@@ -42,7 +42,7 @@ export const MFAVerifyPage: React.FC = () => {
         <Button type="submit" variant="primary" size="lg" fullWidth loading={isLoading} disabled={code.length !== 6}>
           Verify
         </Button>
-        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fey-text-muted)', marginTop: 'var(--space-2)' }}>
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
           Lost your device? Use a backup code if you have one.
         </p>
       </form>
