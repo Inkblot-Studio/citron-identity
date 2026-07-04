@@ -48,6 +48,10 @@ export const LoginExperience: React.FC = () => {
 
   useEffect(() => {
     if (user?.isAuthenticated && !pendingMFA) {
+      // Forced re-login (?prompt=login): the persisted session can still be
+      // visible here before the logout in the effect above lands (both run in
+      // the same commit) — only a fresh form login may redirect back.
+      if (shouldForceLogin(location.search) && !justLoggedIn.current) return;
       const go = () => {
         const redirectUri = getPendingRedirectUri();
         if (redirectUri) {
@@ -67,7 +71,7 @@ export const LoginExperience: React.FC = () => {
     } else if (pendingMFA && user) {
       navigate('/mfa/verify', { replace: true });
     }
-  }, [user, pendingMFA, navigate]);
+  }, [user, pendingMFA, navigate, location.search]);
 
   const validateEmail = (value: string): string => {
     if (!value) return '';
