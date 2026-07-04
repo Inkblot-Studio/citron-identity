@@ -1,72 +1,52 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { CitronMascot } from '../login/CitronMascot';
 import styles from './LoadingScreen.module.scss';
 
 interface LoadingScreenProps {
   onComplete: () => void;
 }
 
+/**
+ * Boot moment: the mascot surfaces on pure white paper, breathes once, and
+ * hands off to the app. The login stage shares the same white background, so
+ * the transition reads as one continuous scene.
+ */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    // Complete loading and fade out after 1.8 seconds
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      setTimeout(onComplete, 800); // Wait for complete fade out animation
-    }, 1800);
-
+    const timer = setTimeout(
+      () => {
+        setIsVisible(false);
+        setTimeout(onComplete, reducedMotion ? 120 : 500);
+      },
+      reducedMotion ? 250 : 1050
+    );
     return () => clearTimeout(timer);
-  }, [onComplete]);
+  }, [onComplete, reducedMotion]);
 
   return (
     <AnimatePresence mode="wait">
       {isVisible && (
-        <motion.div 
+        <motion.div
           className={styles.container}
           initial={{ opacity: 1 }}
-          exit={{ 
-            opacity: 0,
-            scale: 1.02,
-            filter: 'blur(4px)'
-          }}
-          transition={{ 
-            duration: 0.8,
-            ease: [0.4, 0, 0.2, 1]
-          }}
+          exit={{ opacity: 0, filter: 'blur(6px)' }}
+          transition={{ duration: reducedMotion ? 0.12 : 0.5, ease: [0.4, 0, 0.2, 1] }}
         >
-          <motion.div 
-            className={styles.logoContainer}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{
-              scale: 0.9,
-              opacity: 0
-            }}
-            transition={{ 
-              duration: 0.8, 
-              ease: [0.4, 0, 0.2, 1],
-              delay: 0.2
-            }}
+          <motion.div
+            className={styles.mascotHolder}
+            initial={reducedMotion ? false : { opacity: 0, scale: 0.82 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, ease: [0.22, 0.9, 0.3, 1] }}
           >
-            <motion.div 
-              className={styles.logo}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{
-                scale: 0.7
-              }}
-              transition={{ 
-                duration: 0.6, 
-                ease: [0.4, 0, 0.2, 1],
-                delay: 0.3
-              }}
-            >
-              <img src="/src/assets/images/logo_white.svg" alt="IS" />
-            </motion.div>
+            <div className={styles.halo} aria-hidden="true" />
+            <CitronMascot size={76} />
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   );
-}; 
+};

@@ -1,0 +1,28 @@
+.mascot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  // A whisper of shadow lifts the gold mark off the white paper.
+  filter: drop-shadow(0 8px 18px rgba(var(--color-lime-rgb, 196, 160, 48), 0.24));
+}
+
+.eye {
+  fill: var(--citron-mascot-fill, var(--color-lime, #c4a030));
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.smile {
+  fill: none;
+  stroke: var(--citron-mascot-fill, var(--color-lime, #c4a030));
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+}

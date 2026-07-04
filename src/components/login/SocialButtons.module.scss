@@ -1,0 +1,44 @@
+.row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.socialButton {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 54px;
+  border-radius: 16px;
+  border: 1px solid rgba(20, 22, 35, 0.08);
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 6px 18px -14px rgba(20, 22, 35, 0.5);
+  transition:
+    border-color 0.3s cubic-bezier(0.2, 0.6, 0.2, 1),
+    background-color 0.3s cubic-bezier(0.2, 0.6, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.2, 0.6, 0.2, 1);
+
+  &:hover {
+    border-color: rgba(20, 22, 35, 0.16);
+    box-shadow: 0 14px 30px -16px rgba(20, 22, 35, 0.55);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--color-lime-rgb, 196, 160, 48), 0.8);
+    outline-offset: 2px;
+  }
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #1b1b18;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}

@@ -1,0 +1,118 @@
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 14px;
+  border-radius: 16px;
+  background: #f6f6f4;
+  border: 1px solid rgba(20, 22, 35, 0.06);
+  transition:
+    border-color 0.3s cubic-bezier(0.2, 0.6, 0.2, 1),
+    background-color 0.3s cubic-bezier(0.2, 0.6, 0.2, 1),
+    box-shadow 0.35s cubic-bezier(0.2, 0.6, 0.2, 1);
+
+  &:hover:not(.focused) {
+    border-color: rgba(20, 22, 35, 0.12);
+    background: #f3f3f0;
+  }
+}
+
+.focused {
+  background: #ffffff;
+  border-color: rgba(var(--color-lime-rgb, 196, 160, 48), 0.6);
+  box-shadow:
+    0 0 0 4px rgba(var(--color-lime-rgb, 196, 160, 48), 0.14),
+    0 10px 26px -16px rgba(var(--color-lime-rgb, 196, 160, 48), 0.5);
+}
+
+.error {
+  border-color: rgba(var(--color-error-rgb, 190, 62, 53), 0.55);
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+
+  &.focused {
+    box-shadow: 0 0 0 4px rgba(var(--color-error-rgb, 190, 62, 53), 0.14);
+  }
+}
+
+.leading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(20, 22, 35, 0.4);
+  transition: color 0.3s ease;
+}
+
+.focused .leading {
+  color: var(--color-lime-dark, #a5851f);
+}
+
+.error .leading {
+  color: rgba(var(--color-error-rgb, 190, 62, 53), 0.85);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  font-size: 15px;
+  font-family: 'Outfit', sans-serif;
+  color: #1b1b18;
+  background: transparent;
+  border: none;
+  outline: none;
+  caret-color: var(--color-lime-dark, #a5851f);
+
+  &::placeholder {
+    color: rgba(20, 22, 35, 0.38);
+  }
+
+  &::selection {
+    background: rgba(var(--color-lime-rgb, 196, 160, 48), 0.28);
+  }
+
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    -webkit-text-fill-color: #1b1b18;
+    caret-color: var(--color-lime-dark, #a5851f);
+    transition: background-color 999999s ease-in-out 0s;
+  }
+}
+
+.trailing {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field,
+  .leading,
+  .error {
+    transition: none;
+    animation: none;
+  }
+}

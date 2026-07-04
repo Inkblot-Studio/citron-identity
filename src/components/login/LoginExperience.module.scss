@@ -1,0 +1,318 @@
+// Bright, minimal login stage — pure white paper, an engineered dot-grid, and a
+// single roaming mascot as the whole identity. Citron yellow appears only as an
+// accent (the mascot's face and the primary action).
+
+.stage {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #ffffff;
+  color: #1b1b18;
+  font-family: 'Outfit', sans-serif;
+}
+
+.grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+// Whisper-soft radial lift behind the card so it separates from the paper
+// without ever hiding the grid or the cursor's disintegration trail.
+.stage::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    46vw 46vh at 50% 56%,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.18) 46%,
+    transparent 70%
+  );
+}
+
+// --------------------------------------------------------------- roaming mascot
+
+.roamer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 190px;
+  height: 158px;
+  z-index: 5;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.roamerStatic {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+}
+
+// --------------------------------------------------------------------- layout
+
+.layout {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: clamp(24px, 5vw, 64px);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 384px;
+}
+
+// -------------------------------------------------------------------- the card
+
+.card {
+  position: relative;
+  width: 100%;
+  padding: clamp(26px, 3.4vw, 34px);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(20, 22, 35, 0.06);
+  box-shadow:
+    0 2px 6px rgba(20, 22, 35, 0.03),
+    0 30px 60px -32px rgba(20, 22, 35, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: cardfloat 9s ease-in-out infinite;
+  will-change: transform;
+}
+
+.form,
+.magicSent {
+  display: flex;
+  flex-direction: column;
+}
+
+.cardHeader {
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.cardTitle {
+  margin: 0 0 6px;
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #17140a;
+}
+
+.cardSubtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #7c7b73;
+
+  strong {
+    color: #17140a;
+    font-weight: 600;
+  }
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.passwordRow {
+  overflow: hidden;
+}
+
+.peekButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(20, 22, 35, 0.4);
+  cursor: pointer;
+  transition: color 0.25s ease, background-color 0.25s ease;
+
+  &:hover {
+    color: #17140a;
+    background: rgba(20, 22, 35, 0.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--color-lime-rgb, 196, 160, 48), 0.8);
+    outline-offset: 1px;
+  }
+}
+
+.errorRegion {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.errorMessage {
+  margin: 4px 2px;
+  font-size: 13px;
+  color: #d1483b;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.linkButton {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: #8a897f;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--color-lime-dark, #a5851f);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--color-lime-rgb, 196, 160, 48), 0.8);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 16px;
+  color: #a9a89f;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(20, 22, 35, 0.1), transparent);
+  }
+}
+
+// ----------------------------------------------------------- magic link sent
+
+.magicSent {
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.magicIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  color: var(--color-lime-dark, #a5851f);
+  background: rgba(var(--color-lime-rgb, 196, 160, 48), 0.14);
+  border: 1px solid rgba(var(--color-lime-rgb, 196, 160, 48), 0.28);
+}
+
+.magicSent .linkButton {
+  margin-top: 16px;
+}
+
+// --------------------------------------------------------------------- footer
+
+.footer {
+  margin: 0;
+  font-size: 13.5px;
+  color: #a9a89f;
+}
+
+.footerLink {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--color-lime-dark, #a5851f);
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #17140a;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--color-lime-rgb, 196, 160, 48), 0.8);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+// ----------------------------------------------------------------- keyframes
+
+@keyframes cardfloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+// ----------------------------------------------------------------- responsive
+
+@media (max-width: 560px) {
+  .panel {
+    max-width: 420px;
+  }
+
+  .card {
+    padding: 24px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .card {
+    background: #ffffff;
+    border-color: rgba(20, 22, 35, 0.4);
+  }
+
+  .cardSubtitle,
+  .linkButton,
+  .footer {
+    color: #3a3a33;
+  }
+}
