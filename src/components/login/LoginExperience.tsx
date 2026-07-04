@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, MailCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
+import { ACCESS_TOKEN_STORAGE_KEY } from '@/lib/auth-api';
 import { DEFAULT_TENANT_ID } from '@/mocks/tenants';
 import {
   getRedirectUriFromSearch,
@@ -10,6 +11,7 @@ import {
   getPendingRedirectUri,
   clearPendingRedirectUri,
   buildRedirectUrl,
+  shouldForceLogin,
 } from '@/lib/redirect';
 import { AuthExperienceShell } from './AuthExperienceShell';
 import { FloatingInput } from './FloatingInput';
@@ -22,7 +24,7 @@ import styles from './AuthExperience.module.scss';
 export const LoginExperience: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, pendingMFA, login, sendMagicLink, isLoading, error, clearError } =
+  const { user, pendingMFA, login, logout, sendMagicLink, isLoading, error, clearError } =
     useAuthStore();
 
   const [email, setEmail] = useState('');
@@ -39,7 +41,10 @@ export const LoginExperience: React.FC = () => {
   useEffect(() => {
     const redirectUri = getRedirectUriFromSearch(location.search);
     if (redirectUri) setPendingRedirectUri(redirectUri);
-  }, [location.search]);
+    // The relying app rejected the previous session (expired token etc.) —
+    // drop it so the form shows instead of auto-redirecting in a loop.
+    if (shouldForceLogin(location.search)) logout();
+  }, [location.search, logout]);
 
   useEffect(() => {
     if (user?.isAuthenticated && !pendingMFA) {
@@ -47,7 +52,8 @@ export const LoginExperience: React.FC = () => {
         const redirectUri = getPendingRedirectUri();
         if (redirectUri) {
           clearPendingRedirectUri();
-          window.location.href = buildRedirectUrl(redirectUri);
+          const token = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? undefined;
+          window.location.href = buildRedirectUrl(redirectUri, token);
         } else {
           navigate('/dashboard', { replace: true });
         }

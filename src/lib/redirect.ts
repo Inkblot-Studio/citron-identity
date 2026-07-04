@@ -65,14 +65,24 @@ export function clearPendingRedirectUri(): void {
 }
 
 /**
- * Build the post-login redirect URL. Optionally append token when backend supports it.
+ * Build the post-login redirect URL. The token travels in the URL fragment so
+ * it never reaches server logs or Referer headers.
  */
 export function buildRedirectUrl(redirectUri: string, token?: string): string {
   try {
     const url = new URL(redirectUri);
-    if (token) url.searchParams.set('token', token);
+    if (token) url.hash = `token=${encodeURIComponent(token)}`;
     return url.toString();
   } catch {
     return redirectUri;
   }
+}
+
+/**
+ * `?prompt=login` — the relying app demands a fresh sign-in (e.g. its token
+ * exchange failed with a stale session), so skip the auto-redirect for an
+ * already-authenticated user and show the login form.
+ */
+export function shouldForceLogin(search: string): boolean {
+  return new URLSearchParams(search).get('prompt') === 'login';
 }

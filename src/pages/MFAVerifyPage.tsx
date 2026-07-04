@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthPageLayout } from '@/components/auth/AuthPageLayout';
 import { getPendingRedirectUri, clearPendingRedirectUri, buildRedirectUrl } from '@/lib/redirect';
+import { ACCESS_TOKEN_STORAGE_KEY } from '@/lib/auth-api';
 
 export const MFAVerifyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ export const MFAVerifyPage: React.FC = () => {
       const redirectUri = getPendingRedirectUri();
       if (redirectUri) {
         clearPendingRedirectUri();
-        window.location.href = buildRedirectUrl(redirectUri);
+        const token = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? undefined;
+        window.location.href = buildRedirectUrl(redirectUri, token);
       } else {
         navigate('/dashboard', { replace: true });
       }
