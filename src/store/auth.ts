@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { User } from '@/types/auth';
 
 export type { User };
-import { authApi } from '@/lib/auth-api';
+import { authApi, ACCESS_TOKEN_STORAGE_KEY } from '@/lib/auth-api';
 import { useTenantStore } from './tenant';
 
 const STORAGE_KEY = 'inkid_user';
@@ -110,8 +110,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   signup: async (payload) => {
     set({ isLoading: true, error: null });
     try {
-      const { user } = await authApi.signup(payload);
-      set({ user, isLoading: false, pendingEmailVerification: true });
+      const result = await authApi.signup(payload);
+      set({
+        user: result.user,
+        isLoading: false,
+        pendingEmailVerification: result.requiresEmailVerification ?? true,
+      });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Signup failed',
@@ -256,6 +260,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
   logout: () => {
     persistUser(null);
+    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
     useTenantStore.getState().clearTenants();
     set({
       user: null,

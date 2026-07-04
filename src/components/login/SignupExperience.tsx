@@ -82,6 +82,15 @@ export const SignupExperience: React.FC = () => {
     }
   }, [user, pendingEmailVerification, navigate]);
 
+  // Backend accounts that don't require email verification are active immediately —
+  // there's nothing to wait for, so send the user to sign in once the animation plays.
+  useEffect(() => {
+    if (celebrating && user && !user.isAuthenticated && !pendingEmailVerification) {
+      const timer = setTimeout(() => navigate('/login', { replace: true }), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [celebrating, user, pendingEmailVerification, navigate]);
+
   useEffect(() => {
     if (email && !username) {
       setValue('username', generateUsername(email));
