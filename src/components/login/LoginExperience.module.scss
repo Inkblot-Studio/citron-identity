@@ -42,17 +42,16 @@
   left: 0;
   width: 190px;
   height: 158px;
-  z-index: 5;
+  z-index: 2;
   pointer-events: none;
   will-change: transform;
 }
 
 .roamerStatic {
-  position: absolute;
-  top: 5%;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
+  position: fixed;
+  top: 8%;
+  left: 8%;
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -60,7 +59,7 @@
 
 .layout {
   position: relative;
-  z-index: 3;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;

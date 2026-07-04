@@ -29,11 +29,65 @@ const MASCOT_SIZE = 190;
 const MASCOT_H = (MASCOT_SIZE * 108) / 130;
 const HALF_X = MASCOT_SIZE / 2;
 const HALF_Y = MASCOT_H / 2;
-// The mascot always stays this far above the login card, so it can never cover
-// the central fields.
-const CARD_GAP = 30;
+// Circumradius of the mark (incl. spin + shadow) — centre must stay outside
+// the login card by at least this much.
+const SAFE = 128;
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+interface BoundsRect {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+const pointInRect = (x: number, y: number, r: BoundsRect) =>
+  x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+
+/** Keep the mascot centre inside the viewport. */
+const clampToScreen = (x: number, y: number, w: number, h: number) => ({
+  x: clamp(x, SAFE, w - SAFE),
+  y: clamp(y, SAFE, h - SAFE),
+});
+
+/** Push a point outside the login keep-out zone (nearest edge). */
+const pushOutsideKeepOut = (x: number, y: number, keepOut: BoundsRect, w: number, h: number) => {
+  if (!pointInRect(x, y, keepOut)) return clampToScreen(x, y, w, h);
+
+  const candidates = [
+    { x: keepOut.left, y: clamp(y, keepOut.top, keepOut.bottom) },
+    { x: keepOut.right, y: clamp(y, keepOut.top, keepOut.bottom) },
+    { x: clamp(x, keepOut.left, keepOut.right), y: keepOut.top },
+    { x: clamp(x, keepOut.left, keepOut.right), y: keepOut.bottom },
+  ];
+
+  let best = candidates[0];
+  let bestDist = Infinity;
+  for (const c of candidates) {
+    const d = (c.x - x) ** 2 + (c.y - y) ** 2;
+    if (d < bestDist) {
+      bestDist = d;
+      best = c;
+    }
+  }
+  return clampToScreen(best.x, best.y, w, h);
+};
+
+/** Pick a random screen point whose centre stays outside the login keep-out zone. */
+const randomValidPoint = (w: number, h: number, keepOut: BoundsRect) => {
+  for (let i = 0; i < 40; i++) {
+    const p = clampToScreen(
+      SAFE + Math.random() * (w - SAFE * 2),
+      SAFE + Math.random() * (h - SAFE * 2),
+      w,
+      h
+    );
+    if (!pointInRect(p.x, p.y, keepOut)) return p;
+  }
+  // Fallback corners — always outside a centred card.
+  return clampToScreen(SAFE + 20, SAFE + 20, w, h);
+};
 
 export const LoginExperience: React.FC = () => {
   const navigate = useNavigate();
@@ -76,6 +130,8 @@ export const LoginExperience: React.FC = () => {
   const cursor = useRef({ x: -9999, y: -9999 });
   const bounds = useRef({ w: 1280, h: 800 });
   const spinAcc = useRef(0);
+  const wanderTarget = useRef({ x: initX + HALF_X, y: initY + HALF_Y });
+  const nextWanderAt = useRef(0);
 
   const doSpin = useCallback(() => {
     spinAcc.current += 360;
@@ -203,8 +259,9 @@ export const LoginExperience: React.FC = () => {
   }, [reducedMotion]);
 
   // --------------------------------------------------- movement controller
-  // Deliberate, legible motion: the mark glides left/right along a single line
-  // ABOVE the card, shadowing the cursor's column, and never covers the form.
+  // Full-screen roaming: the mark glides anywhere on screen, but its centre
+  // is never allowed inside an expanded keep-out zone around the login card.
+  // The card sits above the mascot (z-index) as a safety net during spring lag.
   useEffect(() => {
     if (reducedMotion) return;
 
@@ -224,34 +281,44 @@ export const LoginExperience: React.FC = () => {
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('pointerleave', onLeave);
 
-    // SAFE = the mark's real visual reach from its own centre, including the
-    // extra swing while it spins. Every position keeps this margin from the
-    // screen edges and from the card, so it can never clip out or cover it.
-    const SAFE = 96;
-    const MAX_DRIFT = 220; // keep the drift subtle + minimal around centre
-
-    const track = () => {
+    const keepOutZone = (): BoundsRect => {
       const { w, h } = bounds.current;
-      const centerX = w / 2;
-      const xMin = SAFE;
-      const xMax = Math.max(xMin + 20, w - SAFE);
-      const cardTop = cardRef.current
-        ? cardRef.current.getBoundingClientRect().top
-        : h * 0.5;
-      // Lowest the centre may sit and still keep the whole (spinning) mark above
-      // the card, clamped so the top can never clip off-screen either.
-      const yLine = clamp(cardTop - CARD_GAP - SAFE, SAFE, h * 0.55);
-      return { centerX, xMin, xMax, yLine };
+      const card = cardRef.current?.getBoundingClientRect();
+      if (!card) {
+        // Before layout: protect the centre third of the screen.
+        return {
+          left: w * 0.28,
+          top: h * 0.22,
+          right: w * 0.72,
+          bottom: h * 0.78,
+        };
+      }
+      return {
+        left: card.left - SAFE,
+        top: card.top - SAFE,
+        right: card.right + SAFE,
+        bottom: card.bottom + SAFE,
+      };
     };
+
+    const resolveTarget = (rawX: number, rawY: number) => {
+      const { w, h } = bounds.current;
+      const keepOut = keepOutZone();
+      return pushOutsideKeepOut(rawX, rawY, keepOut, w, h);
+    };
+
+    nextWanderAt.current = performance.now() + 3200;
 
     let raf = 0;
     const tick = () => {
+      const now = performance.now();
+      const { w, h } = bounds.current;
       const cx = mx.get() + HALF_X;
       const cy = my.get() + HALF_Y;
       const { x: curX, y: curY } = cursor.current;
       const hasCursor = curX > -9000;
 
-      // Eyes track the cursor everywhere, even when it's down over the card.
+      // Eyes track the cursor everywhere.
       if (hasCursor) {
         eyeX.set(clamp((curX - cx) / 260, -1, 1));
         eyeY.set(clamp((curY - cy) / 220, -1, 1));
@@ -260,14 +327,30 @@ export const LoginExperience: React.FC = () => {
         eyeY.set(0);
       }
 
-      const t = track();
-      // Gently shadow the cursor's column within a limited range around centre.
-      const drift = hasCursor
-        ? clamp((curX - t.centerX) * 0.5, -MAX_DRIFT, MAX_DRIFT)
-        : 0;
-      const targetX = clamp(t.centerX + drift, t.xMin, t.xMax);
-      mx.set(targetX - HALF_X);
-      my.set(t.yLine - HALF_Y);
+      let targetX: number;
+      let targetY: number;
+
+      if (hasCursor) {
+        // Follow the cursor across the whole screen, offset slightly above it.
+        const raw = resolveTarget(curX, curY - 72);
+        targetX = raw.x;
+        targetY = raw.y;
+      } else if (now > nextWanderAt.current) {
+        const next = randomValidPoint(w, h, keepOutZone());
+        wanderTarget.current = next;
+        targetX = next.x;
+        targetY = next.y;
+        nextWanderAt.current = now + 3400 + Math.random() * 2400;
+      } else {
+        targetX = wanderTarget.current.x;
+        targetY = wanderTarget.current.y;
+      }
+
+      // Hard clamp every frame — spring lag must never let the centre enter
+      // the keep-out zone or leave the viewport.
+      const safe = resolveTarget(targetX, targetY);
+      mx.set(safe.x - HALF_X);
+      my.set(safe.y - HALF_Y);
 
       raf = requestAnimationFrame(tick);
     };
