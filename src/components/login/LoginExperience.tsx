@@ -1,11 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  useSpring,
-} from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, MailCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { DEFAULT_TENANT_ID } from '@/mocks/tenants';
@@ -16,129 +11,31 @@ import {
   clearPendingRedirectUri,
   buildRedirectUrl,
 } from '@/lib/redirect';
-import { CitronMascot, type MascotMood } from './CitronMascot';
-import { GridCanvas } from './GridCanvas';
+import { AuthExperienceShell } from './AuthExperienceShell';
 import { FloatingInput } from './FloatingInput';
 import { ShimmerButton } from './ShimmerButton';
 import { SocialButtons } from './SocialButtons';
-import styles from './LoginExperience.module.scss';
-
-const cardEase = [0.22, 0.9, 0.3, 1] as const;
-
-const MASCOT_SIZE = 190;
-const MASCOT_H = (MASCOT_SIZE * 108) / 130;
-const HALF_X = MASCOT_SIZE / 2;
-const HALF_Y = MASCOT_H / 2;
-// Circumradius of the mark (incl. spin + shadow) — centre must stay outside
-// the login card by at least this much.
-const SAFE = 128;
-
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-
-interface BoundsRect {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
-const pointInRect = (x: number, y: number, r: BoundsRect) =>
-  x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-
-/** Keep the mascot centre inside the viewport. */
-const clampToScreen = (x: number, y: number, w: number, h: number) => ({
-  x: clamp(x, SAFE, w - SAFE),
-  y: clamp(y, SAFE, h - SAFE),
-});
-
-/** Push a point outside the login keep-out zone (nearest edge). */
-const pushOutsideKeepOut = (x: number, y: number, keepOut: BoundsRect, w: number, h: number) => {
-  if (!pointInRect(x, y, keepOut)) return clampToScreen(x, y, w, h);
-
-  const candidates = [
-    { x: keepOut.left, y: clamp(y, keepOut.top, keepOut.bottom) },
-    { x: keepOut.right, y: clamp(y, keepOut.top, keepOut.bottom) },
-    { x: clamp(x, keepOut.left, keepOut.right), y: keepOut.top },
-    { x: clamp(x, keepOut.left, keepOut.right), y: keepOut.bottom },
-  ];
-
-  let best = candidates[0];
-  let bestDist = Infinity;
-  for (const c of candidates) {
-    const d = (c.x - x) ** 2 + (c.y - y) ** 2;
-    if (d < bestDist) {
-      bestDist = d;
-      best = c;
-    }
-  }
-  return clampToScreen(best.x, best.y, w, h);
-};
-
-/** Pick a random screen point whose centre stays outside the login keep-out zone. */
-const randomValidPoint = (w: number, h: number, keepOut: BoundsRect) => {
-  for (let i = 0; i < 40; i++) {
-    const p = clampToScreen(
-      SAFE + Math.random() * (w - SAFE * 2),
-      SAFE + Math.random() * (h - SAFE * 2),
-      w,
-      h
-    );
-    if (!pointInRect(p.x, p.y, keepOut)) return p;
-  }
-  // Fallback corners — always outside a centred card.
-  return clampToScreen(SAFE + 20, SAFE + 20, w, h);
-};
+import { cardEase } from './authSceneUtils';
+import type { MascotMood } from './CitronMascot';
+import styles from './AuthExperience.module.scss';
 
 export const LoginExperience: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, pendingMFA, login, sendMagicLink, isLoading, error, clearError } =
     useAuthStore();
-  const reducedMotion = useReducedMotion();
 
-  // ---------------------------------------------------------------- auth state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isPasswordless, setIsPasswordless] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
-
-  // ------------------------------------------------------------- scene state
   const [celebrating, setCelebrating] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [attentive, setAttentive] = useState(false);
-  const [winkSignal, setWinkSignal] = useState(0);
-  const [intro, setIntro] = useState(!reducedMotion);
-
   const justLoggedIn = useRef(false);
-  const cardRef = useRef<HTMLDivElement>(null);
 
-  // --------------------------------------------------------- roaming mascot
-  const initX =
-    typeof window !== 'undefined' ? window.innerWidth * 0.5 - HALF_X : 0;
-  const initY =
-    typeof window !== 'undefined' ? window.innerHeight * 0.14 - HALF_Y : 0;
-
-  // Position glides; eyes track quickly; spin turns the whole mark on itself.
-  const mx = useSpring(initX, { stiffness: 60, damping: 20, mass: 1 });
-  const my = useSpring(initY, { stiffness: 60, damping: 20, mass: 1 });
-  const eyeX = useSpring(0, { stiffness: 140, damping: 20 });
-  const eyeY = useSpring(0, { stiffness: 140, damping: 20 });
-  const spin = useSpring(0, { stiffness: 42, damping: 12, mass: 1 });
-
-  const cursor = useRef({ x: -9999, y: -9999 });
-  const bounds = useRef({ w: 1280, h: 800 });
-  const spinAcc = useRef(0);
-  const wanderTarget = useRef({ x: initX + HALF_X, y: initY + HALF_Y });
-  const nextWanderAt = useRef(0);
-
-  const doSpin = useCallback(() => {
-    spinAcc.current += 360;
-    spin.set(spinAcc.current);
-  }, [spin]);
-
-  // -------------------------------------------------- existing business logic
   useEffect(() => {
     const redirectUri = getRedirectUriFromSearch(location.search);
     if (redirectUri) setPendingRedirectUri(redirectUri);
@@ -155,7 +52,7 @@ export const LoginExperience: React.FC = () => {
           navigate('/dashboard', { replace: true });
         }
       };
-      if (justLoggedIn.current && !reducedMotion) {
+      if (justLoggedIn.current) {
         setCelebrating(true);
         const t = setTimeout(go, 1100);
         return () => clearTimeout(t);
@@ -164,7 +61,7 @@ export const LoginExperience: React.FC = () => {
     } else if (pendingMFA && user) {
       navigate('/mfa/verify', { replace: true });
     }
-  }, [user, pendingMFA, navigate, reducedMotion]);
+  }, [user, pendingMFA, navigate]);
 
   const validateEmail = (value: string): string => {
     if (!value) return '';
@@ -229,160 +126,6 @@ export const LoginExperience: React.FC = () => {
     }
   };
 
-  // ---------------------------------------------------------- entrance beat
-  useEffect(() => {
-    if (reducedMotion) return;
-    const t = setTimeout(() => setIntro(false), 2200);
-    return () => clearTimeout(t);
-  }, [reducedMotion]);
-
-  // ------------------------------------------------------- idle wink timer
-  useEffect(() => {
-    if (reducedMotion) return;
-    let timer: ReturnType<typeof setTimeout>;
-    const arm = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        setWinkSignal((n) => n + 1);
-        arm();
-      }, 12000);
-    };
-    arm();
-    const reset = () => arm();
-    window.addEventListener('pointermove', reset, { passive: true });
-    window.addEventListener('keydown', reset);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('pointermove', reset);
-      window.removeEventListener('keydown', reset);
-    };
-  }, [reducedMotion]);
-
-  // --------------------------------------------------- movement controller
-  // Full-screen roaming: the mark glides anywhere on screen, but its centre
-  // is never allowed inside an expanded keep-out zone around the login card.
-  // The card sits above the mascot (z-index) as a safety net during spring lag.
-  useEffect(() => {
-    if (reducedMotion) return;
-
-    const readBounds = () => {
-      bounds.current = { w: window.innerWidth, h: window.innerHeight };
-    };
-    readBounds();
-
-    const onMove = (e: PointerEvent) => {
-      cursor.current = { x: e.clientX, y: e.clientY };
-    };
-    const onLeave = () => {
-      cursor.current = { x: -9999, y: -9999 };
-    };
-
-    window.addEventListener('resize', readBounds);
-    window.addEventListener('pointermove', onMove, { passive: true });
-    window.addEventListener('pointerleave', onLeave);
-
-    const keepOutZone = (): BoundsRect => {
-      const { w, h } = bounds.current;
-      const card = cardRef.current?.getBoundingClientRect();
-      if (!card) {
-        // Before layout: protect the centre third of the screen.
-        return {
-          left: w * 0.28,
-          top: h * 0.22,
-          right: w * 0.72,
-          bottom: h * 0.78,
-        };
-      }
-      return {
-        left: card.left - SAFE,
-        top: card.top - SAFE,
-        right: card.right + SAFE,
-        bottom: card.bottom + SAFE,
-      };
-    };
-
-    const resolveTarget = (rawX: number, rawY: number) => {
-      const { w, h } = bounds.current;
-      const keepOut = keepOutZone();
-      return pushOutsideKeepOut(rawX, rawY, keepOut, w, h);
-    };
-
-    nextWanderAt.current = performance.now() + 3200;
-
-    let raf = 0;
-    const tick = () => {
-      const now = performance.now();
-      const { w, h } = bounds.current;
-      const cx = mx.get() + HALF_X;
-      const cy = my.get() + HALF_Y;
-      const { x: curX, y: curY } = cursor.current;
-      const hasCursor = curX > -9000;
-
-      // Eyes track the cursor everywhere.
-      if (hasCursor) {
-        eyeX.set(clamp((curX - cx) / 260, -1, 1));
-        eyeY.set(clamp((curY - cy) / 220, -1, 1));
-      } else {
-        eyeX.set(0);
-        eyeY.set(0);
-      }
-
-      let targetX: number;
-      let targetY: number;
-
-      if (hasCursor) {
-        // Follow the cursor across the whole screen, offset slightly above it.
-        const raw = resolveTarget(curX, curY - 72);
-        targetX = raw.x;
-        targetY = raw.y;
-      } else if (now > nextWanderAt.current) {
-        const next = randomValidPoint(w, h, keepOutZone());
-        wanderTarget.current = next;
-        targetX = next.x;
-        targetY = next.y;
-        nextWanderAt.current = now + 3400 + Math.random() * 2400;
-      } else {
-        targetX = wanderTarget.current.x;
-        targetY = wanderTarget.current.y;
-      }
-
-      // Hard clamp every frame — spring lag must never let the centre enter
-      // the keep-out zone or leave the viewport.
-      const safe = resolveTarget(targetX, targetY);
-      mx.set(safe.x - HALF_X);
-      my.set(safe.y - HALF_Y);
-
-      raf = requestAnimationFrame(tick);
-    };
-
-    raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', readBounds);
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerleave', onLeave);
-    };
-  }, [reducedMotion, mx, my, eyeX, eyeY]);
-
-  // A gentle full turn on its own axis, on a calm cadence.
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = setInterval(doSpin, 6000);
-    return () => clearInterval(id);
-  }, [reducedMotion, doSpin]);
-
-  // Playful spins on meaningful moments: hovering the button, celebrating.
-  useEffect(() => {
-    if (reducedMotion || !attentive) return;
-    doSpin();
-  }, [attentive, reducedMotion, doSpin]);
-
-  useEffect(() => {
-    if (reducedMotion || !celebrating) return;
-    doSpin();
-  }, [celebrating, reducedMotion, doSpin]);
-
-  // ----------------------------------------------------------------- the mood
   const hasError = Boolean(emailError || error);
   const mood: MascotMood = celebrating
     ? 'celebrating'
@@ -393,229 +136,193 @@ export const LoginExperience: React.FC = () => {
         : 'idle';
 
   return (
-    <div className={styles.stage}>
-      <GridCanvas className={styles.grid} />
+    <AuthExperienceShell
+      mood={mood}
+      celebrating={celebrating}
+      attentive={attentive}
+      footer={
+        <p className={styles.footer}>
+          New here?{' '}
+          <button
+            type="button"
+            className={styles.footerLink}
+            onClick={() => navigate('/signup')}
+          >
+            Create an account
+          </button>
+        </p>
+      }
+    >
+      <AnimatePresence mode="wait">
+        {magicLinkSent ? (
+          <motion.div
+            key="magic-sent"
+            className={styles.magicSent}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.45, ease: cardEase }}
+          >
+            <span className={styles.magicIcon}>
+              <MailCheck size={24} strokeWidth={1.9} />
+            </span>
+            <h2 className={styles.cardTitle}>Check your inbox</h2>
+            <p className={styles.cardSubtitle}>
+              We sent a sign-in link to <strong>{email}</strong>. It expires shortly, so
+              open it soon.
+            </p>
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={() => {
+                setMagicLinkSent(false);
+                clearError();
+              }}
+            >
+              Use a different email
+            </button>
+          </motion.div>
+        ) : (
+          <motion.form
+            key="login-form"
+            onSubmit={handleSubmit}
+            className={styles.form}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.45, ease: cardEase }}
+          >
+            <header className={styles.cardHeader}>
+              <h1 className={styles.cardTitle}>Sign in to Citron</h1>
+            </header>
 
-      {/* roaming mascot — floats above everything, never blocks input */}
-      {reducedMotion ? (
-        <div className={styles.roamerStatic}>
-          <CitronMascot mood={mood} size={MASCOT_SIZE} winkSignal={winkSignal} />
-        </div>
-      ) : (
-        <motion.div
-          className={styles.roamer}
-          style={{ x: mx, y: my }}
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: cardEase }}
-        >
-          <CitronMascot
-            mood={mood}
-            size={MASCOT_SIZE}
-            pointerX={eyeX}
-            pointerY={eyeY}
-            spin={spin}
-            attentive={attentive}
-            introLook={intro}
-            winkSignal={winkSignal}
-          />
-        </motion.div>
-      )}
+            <div className={styles.fields}>
+              <FloatingInput
+                label="Email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                error={Boolean(emailError)}
+                leading={<Mail size={18} strokeWidth={1.9} />}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError('');
+                  if (error) clearError();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && email.trim()) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+              />
 
-      {/* -------------------------------------------------------------- card */}
-      <main className={styles.layout}>
-        <motion.section
-          className={styles.panel}
-          ref={cardRef}
-          initial={reducedMotion ? false : { opacity: 0, y: 26, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.85, ease: cardEase, delay: 0.15 }}
-        >
-          <div className={styles.card}>
-            <AnimatePresence mode="wait">
-              {magicLinkSent ? (
-                <motion.div
-                  key="magic-sent"
-                  className={styles.magicSent}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.45, ease: cardEase }}
-                >
-                  <span className={styles.magicIcon}>
-                    <MailCheck size={24} strokeWidth={1.9} />
-                  </span>
-                  <h2 className={styles.cardTitle}>Check your inbox</h2>
-                  <p className={styles.cardSubtitle}>
-                    We sent a sign-in link to <strong>{email}</strong>. It expires shortly,
-                    so open it soon.
-                  </p>
-                  <button
-                    type="button"
-                    className={styles.linkButton}
-                    onClick={() => {
-                      setMagicLinkSent(false);
-                      clearError();
-                    }}
+              <AnimatePresence initial={false}>
+                {!isPasswordless && (
+                  <motion.div
+                    key="password"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.35, ease: cardEase }}
+                    className={styles.passwordRow}
                   >
-                    Use a different email
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.form
-                  key="login-form"
-                  onSubmit={handleSubmit}
-                  className={styles.form}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.45, ease: cardEase }}
-                >
-                  <header className={styles.cardHeader}>
-                    <h1 className={styles.cardTitle}>Sign in to Citron</h1>
-                  </header>
-
-                  <div className={styles.fields}>
                     <FloatingInput
-                      label="Email"
-                      type="email"
-                      autoComplete="email"
-                      value={email}
-                      error={Boolean(emailError)}
-                      leading={<Mail size={18} strokeWidth={1.9} />}
+                      label="Password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      value={password}
+                      error={Boolean(emailError && !validateEmail(email))}
+                      leading={<Lock size={18} strokeWidth={1.9} />}
                       onChange={(e) => {
-                        setEmail(e.target.value);
+                        setPassword(e.target.value);
                         if (emailError) setEmailError('');
                         if (error) clearError();
                       }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && email.trim()) {
-                          e.preventDefault();
-                          handleSubmit();
-                        }
-                      }}
+                      onFocus={() => setPasswordFocused(true)}
+                      onBlur={() => setPasswordFocused(false)}
+                      trailing={
+                        <button
+                          type="button"
+                          className={styles.peekButton}
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                        </button>
+                      }
                     />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-                    <AnimatePresence initial={false}>
-                      {!isPasswordless && (
-                        <motion.div
-                          key="password"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.35, ease: cardEase }}
-                          className={styles.passwordRow}
-                        >
-                          <FloatingInput
-                            label="Password"
-                            type={showPassword ? 'text' : 'password'}
-                            autoComplete="current-password"
-                            value={password}
-                            error={Boolean(emailError && !validateEmail(email))}
-                            leading={<Lock size={18} strokeWidth={1.9} />}
-                            onChange={(e) => {
-                              setPassword(e.target.value);
-                              if (emailError) setEmailError('');
-                              if (error) clearError();
-                            }}
-                            onFocus={() => setPasswordFocused(true)}
-                            onBlur={() => setPasswordFocused(false)}
-                            trailing={
-                              <button
-                                type="button"
-                                className={styles.peekButton}
-                                onClick={() => setShowPassword(!showPassword)}
-                                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                              >
-                                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                              </button>
-                            }
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <div aria-live="polite" className={styles.errorRegion}>
-                    <AnimatePresence>
-                      {emailError && (
-                        <motion.p
-                          className={styles.errorMessage}
-                          initial={{ opacity: 0, y: -6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -6 }}
-                          transition={{ duration: 0.25 }}
-                          role="alert"
-                        >
-                          {emailError}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <ShimmerButton
-                    type="submit"
-                    loading={isLoading}
-                    disabled={
-                      !email.trim() ||
-                      !!emailError ||
-                      (!isPasswordless && !password.trim())
-                    }
-                    onHoverStart={() => setAttentive(true)}
-                    onHoverEnd={() => setAttentive(false)}
+            <div aria-live="polite" className={styles.errorRegion}>
+              <AnimatePresence>
+                {emailError && (
+                  <motion.p
+                    className={styles.errorMessage}
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.25 }}
+                    role="alert"
                   >
-                    {isPasswordless ? 'Send magic link' : 'Sign in'}
-                  </ShimmerButton>
+                    {emailError}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
 
-                  <div className={styles.options}>
-                    <button
-                      type="button"
-                      className={styles.linkButton}
-                      onClick={() => {
-                        setIsPasswordless(!isPasswordless);
-                        setEmailError('');
-                        clearError();
-                      }}
-                    >
-                      {isPasswordless ? 'Use password' : 'Use magic link'}
-                    </button>
-                    {!isPasswordless && (
-                      <button
-                        type="button"
-                        className={styles.linkButton}
-                        onClick={() => navigate('/forgot-password')}
-                      >
-                        Forgot password?
-                      </button>
-                    )}
-                  </div>
-
-                  <div className={styles.divider} role="separator">
-                    <span>or</span>
-                  </div>
-
-                  <SocialButtons
-                    onGoogleSignIn={handleGoogleSignIn}
-                    onAppleSignIn={handleAppleSignIn}
-                    onMicrosoftSignIn={handleMicrosoftSignIn}
-                  />
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <p className={styles.footer}>
-            New here?{' '}
-            <button
-              type="button"
-              className={styles.footerLink}
-              onClick={() => navigate('/signup')}
+            <ShimmerButton
+              type="submit"
+              loading={isLoading}
+              disabled={
+                !email.trim() ||
+                !!emailError ||
+                (!isPasswordless && !password.trim())
+              }
+              onHoverStart={() => setAttentive(true)}
+              onHoverEnd={() => setAttentive(false)}
             >
-              Create an account
-            </button>
-          </p>
-        </motion.section>
-      </main>
-    </div>
+              {isPasswordless ? 'Send magic link' : 'Sign in'}
+            </ShimmerButton>
+
+            <div className={styles.options}>
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={() => {
+                  setIsPasswordless(!isPasswordless);
+                  setEmailError('');
+                  clearError();
+                }}
+              >
+                {isPasswordless ? 'Use password' : 'Use magic link'}
+              </button>
+              {!isPasswordless && (
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={() => navigate('/forgot-password')}
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+
+            <div className={styles.divider} role="separator">
+              <span>or</span>
+            </div>
+
+            <SocialButtons
+              onGoogleSignIn={handleGoogleSignIn}
+              onAppleSignIn={handleAppleSignIn}
+              onMicrosoftSignIn={handleMicrosoftSignIn}
+            />
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </AuthExperienceShell>
   );
 };

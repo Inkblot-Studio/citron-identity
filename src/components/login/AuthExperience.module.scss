@@ -1,6 +1,4 @@
-// Bright, minimal login stage — pure white paper, an engineered dot-grid, and a
-// single roaming mascot as the whole identity. Citron yellow appears only as an
-// accent (the mascot's face and the primary action).
+// Shared auth stage — pure white paper, engineered dot-grid, roaming mascot.
 
 .stage {
   position: relative;
@@ -18,8 +16,6 @@
   pointer-events: none;
 }
 
-// Whisper-soft radial lift behind the card so it separates from the paper
-// without ever hiding the grid or the cursor's disintegration trail.
 .stage::after {
   content: '';
   position: fixed;
@@ -33,8 +29,6 @@
     transparent 70%
   );
 }
-
-// --------------------------------------------------------------- roaming mascot
 
 .roamer {
   position: fixed;
@@ -55,8 +49,6 @@
   pointer-events: none;
 }
 
-// --------------------------------------------------------------------- layout
-
 .layout {
   position: relative;
   z-index: 10;
@@ -76,8 +68,6 @@
   max-width: 384px;
 }
 
-// -------------------------------------------------------------------- the card
-
 .card {
   position: relative;
   width: 100%;
@@ -96,7 +86,8 @@
 }
 
 .form,
-.magicSent {
+.magicSent,
+.successState {
   display: flex;
   flex-direction: column;
 }
@@ -149,15 +140,24 @@
   cursor: pointer;
   transition: color 0.25s ease, background-color 0.25s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     color: #17140a;
     background: rgba(20, 22, 35, 0.05);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
   }
 
   &:focus-visible {
     outline: 2px solid rgba(var(--color-lime-rgb, 196, 160, 48), 0.8);
     outline-offset: 1px;
   }
+}
+
+.iconSpin {
+  animation: iconPulse 0.8s ease-in-out infinite;
 }
 
 .errorRegion {
@@ -219,9 +219,8 @@
   }
 }
 
-// ----------------------------------------------------------- magic link sent
-
-.magicSent {
+.magicSent,
+.successState {
   align-items: flex-start;
   gap: 6px;
 }
@@ -239,11 +238,38 @@
   border: 1px solid rgba(var(--color-lime-rgb, 196, 160, 48), 0.28);
 }
 
-.magicSent .linkButton {
+.magicSent .linkButton,
+.successState .linkButton {
   margin-top: 16px;
 }
 
-// --------------------------------------------------------------------- footer
+.passwordStrength {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.strengthBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(20, 22, 35, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.strengthFill {
+  height: 100%;
+  min-width: 4px;
+  border-radius: 999px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strengthText {
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
 
 .footer {
   margin: 0;
@@ -273,8 +299,6 @@
   }
 }
 
-// ----------------------------------------------------------------- keyframes
-
 @keyframes cardfloat {
   0%,
   100% {
@@ -285,7 +309,15 @@
   }
 }
 
-// ----------------------------------------------------------------- responsive
+@keyframes iconPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
 
 @media (max-width: 560px) {
   .panel {
