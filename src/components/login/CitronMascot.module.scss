@@ -15,14 +15,14 @@
 }
 
 .eye {
-  fill: var(--citron-mascot-fill, var(--color-lime, #c4a030));
+  fill: var(--citron-mascot-fill, var(--color-lime, var(--inkblot-color-accent-citron-500)));
   transform-box: fill-box;
   transform-origin: center;
 }
 
 .smile {
   fill: none;
-  stroke: var(--citron-mascot-fill, var(--color-lime, #c4a030));
+  stroke: var(--citron-mascot-fill, var(--color-lime, var(--inkblot-color-accent-citron-500)));
   stroke-linecap: butt;
   stroke-linejoin: round;
 }

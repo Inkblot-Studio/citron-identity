@@ -115,7 +115,7 @@
   color: var(--color-text-primary);
   margin-bottom: var(--space-3);
   line-height: var(--line-height-tight);
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--inkblot-typography-font-family-sans);
   letter-spacing: -0.02em;
 }
 
@@ -132,7 +132,7 @@
   line-height: var(--line-height-relaxed);
   max-width: 320px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--inkblot-typography-font-family-sans);
 }
 
 .form {
@@ -163,7 +163,7 @@
   left: 4px;
   color: var(--color-error);
   font-size: 13px;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--inkblot-typography-font-family-sans);
   font-weight: 400;
   line-height: 1.4;
   animation: fadeIn 0.3s ease;
@@ -185,7 +185,7 @@
   cursor: pointer;
   padding: 0;
   transition: color 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--inkblot-typography-font-family-sans);
 
   &:hover {
     color: var(--color-lime-dark);
@@ -243,7 +243,7 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--inkblot-typography-font-family-sans);
 }
 
 .footerLink {
@@ -253,7 +253,7 @@
   font-weight: var(--font-weight-semibold);
   text-decoration: none;
   transition: color 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--inkblot-typography-font-family-sans);
   cursor: pointer;
   padding: 0;
 
@@ -272,7 +272,7 @@
   cursor: pointer;
   padding: 0;
   transition: color 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--inkblot-typography-font-family-sans);
 
   &:hover {
     color: var(--color-lime-dark);

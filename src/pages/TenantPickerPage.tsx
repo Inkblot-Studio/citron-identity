@@ -48,7 +48,7 @@ export const TenantPickerPage: React.FC = () => {
             >
               <div
                 className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg"
-                style={{ backgroundColor: tenant.primaryColor || '#c4a030' }}
+                style={{ backgroundColor: tenant.primaryColor || 'var(--inkblot-color-accent-citron-500)' }}
               >
                 {tenant.name.charAt(0)}
               </div>

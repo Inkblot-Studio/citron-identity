@@ -32,7 +32,7 @@ export const AuthLayout: React.FC = () => {
             <div className="mb-6 flex justify-center">
               <div
                 className="w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl"
-                style={{ backgroundColor: tenant.primaryColor || '#c4a030' }}
+                style={{ backgroundColor: tenant.primaryColor || 'var(--inkblot-color-accent-citron-500)' }}
               >
                 {tenant.name.charAt(0)}
               </div>

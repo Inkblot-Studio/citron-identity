@@ -29,13 +29,13 @@ body {
   overflow-x: hidden;
 }
 
-// Typography - Outfit for headings, Arial Nova for body
+// Typography — citron-ds v2 (Space Grotesk display, IBM Plex Sans body)
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--inkblot-typography-font-family-display);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   color: var(--color-text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--inkblot-typography-letter-spacing-tight);
 }
 
 h1 { font-size: var(--font-size-4xl); }

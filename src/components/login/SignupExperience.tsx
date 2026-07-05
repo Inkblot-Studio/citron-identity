@@ -33,7 +33,7 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 const strengthColor = (score: number) => {
   if (score <= 2) return 'var(--color-error, #d1483b)';
-  if (score <= 3) return 'var(--color-warning, #c4a030)';
+  if (score <= 3) return 'var(--color-warning, var(--inkblot-color-semantic-warning-main))';
   return 'var(--color-success, #2d8a4e)';
 };
 
