@@ -10,4 +10,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <App />
     </ErrorBoundary>
   </React.StrictMode>
-); this is intentionally broken syntax !!!
+); 
