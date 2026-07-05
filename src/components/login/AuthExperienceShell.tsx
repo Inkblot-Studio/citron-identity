@@ -20,6 +20,8 @@ interface AuthExperienceShellProps {
   mood: MascotMood;
   celebrating?: boolean;
   attentive?: boolean;
+  /** Mascot shuts both eyes while a hidden password field is focused. */
+  eyesClosed?: boolean;
 }
 
 /**
@@ -32,6 +34,7 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
   mood,
   celebrating = false,
   attentive = false,
+  eyesClosed = false,
 }) => {
   const reducedMotion = useReducedMotion();
   const [winkSignal, setWinkSignal] = useState(0);
@@ -74,7 +77,7 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
       timer = setTimeout(() => {
         setWinkSignal((n) => n + 1);
         arm();
-      }, 12000);
+      }, 22000);
     };
     arm();
     const reset = () => arm();
@@ -130,7 +133,7 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
       return pushOutsideKeepOut(rawX, rawY, keepOutZone(), w, h);
     };
 
-    nextWanderAt.current = performance.now() + 3200;
+    nextWanderAt.current = performance.now() + 4800;
 
     let raf = 0;
     const tick = () => {
@@ -161,7 +164,7 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
         wanderTarget.current = next;
         targetX = next.x;
         targetY = next.y;
-        nextWanderAt.current = now + 3400 + Math.random() * 2400;
+        nextWanderAt.current = now + 5200 + Math.random() * 3600;
       } else {
         targetX = wanderTarget.current.x;
         targetY = wanderTarget.current.y;
@@ -184,17 +187,6 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
   }, [reducedMotion, mx, my, eyeX, eyeY]);
 
   useEffect(() => {
-    if (reducedMotion) return;
-    const id = setInterval(doSpin, 6000);
-    return () => clearInterval(id);
-  }, [reducedMotion, doSpin]);
-
-  useEffect(() => {
-    if (reducedMotion || !attentive) return;
-    doSpin();
-  }, [attentive, reducedMotion, doSpin]);
-
-  useEffect(() => {
     if (reducedMotion || !celebrating) return;
     doSpin();
   }, [celebrating, reducedMotion, doSpin]);
@@ -205,15 +197,15 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
 
       {reducedMotion ? (
         <div className={styles.roamerStatic}>
-          <CitronMascot mood={mood} size={MASCOT_SIZE} winkSignal={winkSignal} />
+          <CitronMascot mood={mood} size={MASCOT_SIZE} winkSignal={winkSignal} eyesClosed={eyesClosed} />
         </div>
       ) : (
         <motion.div
           className={styles.roamer}
           style={{ x: mx, y: my }}
-          initial={{ opacity: 0, scale: 0.7 }}
+          initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: cardEase }}
+          transition={{ duration: 0.55, ease: cardEase }}
         >
           <CitronMascot
             mood={mood}
@@ -224,6 +216,7 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
             attentive={attentive}
             introLook={intro}
             winkSignal={winkSignal}
+            eyesClosed={eyesClosed}
           />
         </motion.div>
       )}
@@ -232,9 +225,9 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
         <motion.section
           className={styles.panel}
           ref={cardRef}
-          initial={reducedMotion ? false : { opacity: 0, y: 26, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.85, ease: cardEase, delay: 0.15 }}
+          initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: cardEase, delay: 0.08 }}
         >
           <div className={styles.card}>{children}</div>
           {footer}

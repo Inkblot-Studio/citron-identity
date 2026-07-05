@@ -13,7 +13,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base styles - merge from global.scss */
+/* Base styles — citron-ds tokens imported above */
 @layer base {
   *,
   *::before,

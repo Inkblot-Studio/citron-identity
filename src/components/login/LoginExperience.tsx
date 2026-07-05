@@ -38,6 +38,8 @@ export const LoginExperience: React.FC = () => {
   const [attentive, setAttentive] = useState(false);
   const justLoggedIn = useRef(false);
 
+  const eyesClosed = passwordFocused && !showPassword;
+
   useEffect(() => {
     const redirectUri = getRedirectUriFromSearch(location.search);
     if (redirectUri) setPendingRedirectUri(redirectUri);
@@ -141,15 +143,14 @@ export const LoginExperience: React.FC = () => {
     ? 'celebrating'
     : hasError
       ? 'confused'
-      : passwordFocused && !showPassword && password.length > 0
-        ? 'shy'
-        : 'idle';
+      : 'idle';
 
   return (
     <AuthExperienceShell
       mood={mood}
       celebrating={celebrating}
       attentive={attentive}
+      eyesClosed={eyesClosed}
       footer={
         <p className={styles.footer}>
           New here?{' '}

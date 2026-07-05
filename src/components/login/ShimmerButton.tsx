@@ -33,13 +33,11 @@ export const ShimmerButton: React.FC<ShimmerButtonProps> = ({
       {...rest}
       disabled={disabled || loading}
       className={clsx(styles.button, loading && styles.loading, className)}
-      whileHover={reducedMotion || disabled ? undefined : { y: -2, scale: 1.015 }}
-      whileTap={reducedMotion || disabled ? undefined : { scale: 0.97 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 22 }}
+      whileTap={reducedMotion || disabled ? undefined : { scale: 0.99 }}
+      transition={{ duration: 0.12 }}
       onHoverStart={onHoverStart}
       onHoverEnd={onHoverEnd}
     >
-      <span className={styles.sheen} aria-hidden="true" />
       <span className={styles.content}>
         {loading ? (
           <span className={styles.spinner} aria-label="Loading" />
@@ -47,7 +45,7 @@ export const ShimmerButton: React.FC<ShimmerButtonProps> = ({
           <>
             <span className={styles.label}>{children}</span>
             {showArrow && (
-              <ArrowRight className={styles.arrow} size={19} strokeWidth={2.4} aria-hidden="true" />
+              <ArrowRight className={styles.arrow} size={18} strokeWidth={2} aria-hidden="true" />
             )}
           </>
         )}

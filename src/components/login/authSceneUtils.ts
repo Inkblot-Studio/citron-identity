@@ -1,11 +1,11 @@
 export const cardEase = [0.22, 0.9, 0.3, 1] as const;
 
-export const MASCOT_SIZE = 190;
-export const MASCOT_H = (MASCOT_SIZE * 108) / 130;
+export const MASCOT_SIZE = 168;
+export const MASCOT_H = MASCOT_SIZE;
 export const HALF_X = MASCOT_SIZE / 2;
 export const HALF_Y = MASCOT_H / 2;
-/** Circumradius of the mark (incl. spin + shadow). */
-export const SAFE = 128;
+/** Circumradius of the mark (incl. spin). */
+export const SAFE = 108;
 
 export const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 

@@ -1,6 +1,6 @@
 .row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -9,24 +9,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 54px;
-  border-radius: 16px;
-  border: 1px solid rgba(20, 22, 35, 0.08);
-  background: #ffffff;
+  height: 48px;
+  border-radius: var(--inkblot-radius-md);
+  border: 1px solid var(--inkblot-semantic-color-border-default);
+  background: var(--inkblot-semantic-color-background-secondary);
   cursor: pointer;
-  box-shadow: 0 6px 18px -14px rgba(20, 22, 35, 0.5);
   transition:
-    border-color 0.3s cubic-bezier(0.2, 0.6, 0.2, 1),
-    background-color 0.3s cubic-bezier(0.2, 0.6, 0.2, 1),
-    box-shadow 0.3s cubic-bezier(0.2, 0.6, 0.2, 1);
+    border-color var(--inkblot-duration-fast) var(--inkblot-easing-default),
+    background-color var(--inkblot-duration-fast) var(--inkblot-easing-default);
 
   &:hover {
-    border-color: rgba(20, 22, 35, 0.16);
-    box-shadow: 0 14px 30px -16px rgba(20, 22, 35, 0.55);
+    border-color: var(--inkblot-semantic-color-border-strong);
+    background: var(--inkblot-semantic-color-background-primary);
   }
 
   &:focus-visible {
-    outline: 2px solid rgba(var(--color-lime-rgb, 196, 160, 48), 0.8);
+    outline: 2px solid var(--inkblot-semantic-color-border-focus);
     outline-offset: 2px;
   }
 }
@@ -35,10 +33,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #1b1b18;
+  color: var(--inkblot-semantic-color-text-primary);
 
   svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 }

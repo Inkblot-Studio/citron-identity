@@ -51,6 +51,7 @@ export const SignupExperience: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
   const [attentive, setAttentive] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [usernameTaken, setUsernameTaken] = useState<string | null>(null);
@@ -147,13 +148,15 @@ export const SignupExperience: React.FC = () => {
   const hasError =
     !!error || !!usernameTaken || Object.keys(errors).length > 0;
 
+  const eyesClosed =
+    (passwordFocused && !showPassword) ||
+    (confirmPasswordFocused && !showConfirmPassword);
+
   const mood: MascotMood = celebrating
     ? 'celebrating'
     : hasError
       ? 'confused'
-      : passwordFocused && !showPassword && password.length > 0
-        ? 'shy'
-        : 'idle';
+      : 'idle';
 
   const formError =
     usernameTaken
@@ -199,6 +202,7 @@ export const SignupExperience: React.FC = () => {
       mood={mood}
       celebrating={celebrating}
       attentive={attentive}
+      eyesClosed={eyesClosed}
       footer={
         <p className={styles.footer}>
           Already have an account?{' '}
@@ -311,7 +315,10 @@ export const SignupExperience: React.FC = () => {
             autoComplete="new-password"
             leading={<Lock size={18} strokeWidth={1.9} />}
             error={Boolean(errors.confirmPassword)}
-            {...register('confirmPassword')}
+            {...register('confirmPassword', {
+              onBlur: () => setConfirmPasswordFocused(false),
+            })}
+            onFocus={() => setConfirmPasswordFocused(true)}
             trailing={
               <button
                 type="button"
