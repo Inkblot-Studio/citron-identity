@@ -67,6 +67,23 @@ async function readProblemMessage(res: Response, fallback: string): Promise<stri
   return problem?.detail ?? problem?.title ?? fallback;
 }
 
+// POST /api/auth/check — email-first sign-in routing (password vs signup step).
+async function realCheckAccount(email: string): Promise<AccountCheck> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await readProblemMessage(res, 'Could not look up this email'));
+  }
+
+  const data = (await res.json()) as { exists: boolean; displayName: string | null; hasPassword: boolean };
+  // identity-api has no SSO-only accounts surfaced here yet — provider stays null.
+  return { exists: data.exists, name: data.displayName ?? undefined, provider: null };
+}
+
 // citron-identity-api has no tenant concept — tenantId is kept for signature
 // compatibility with the mock API and callers, and only stored on the client.
 async function realLogin(
@@ -168,7 +185,7 @@ async function realSignup(payload: {
 export const authApi: AuthApi = {
   // Email-first lookup is a client UX concern; always mocked until the backend
   // exposes a dedicated endpoint (safe to override in real integration).
-  checkAccount: mockCheckAccount,
+  checkAccount: API_BASE_URL ? realCheckAccount : mockCheckAccount,
   login: API_BASE_URL ? realLogin : mockLogin,
   signup: API_BASE_URL ? realSignup : mockSignup,
   checkUsernameAvailability: mockCheckUsernameAvailability,
