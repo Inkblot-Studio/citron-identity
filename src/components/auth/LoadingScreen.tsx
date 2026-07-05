@@ -8,9 +8,7 @@ interface LoadingScreenProps {
 }
 
 /**
- * Boot moment: the mascot surfaces on pure white paper, breathes once, and
- * hands off to the app. The login stage shares the same white background, so
- * the transition reads as one continuous scene.
+ * Boot moment: the mascot surfaces on white paper and hands off to the app.
  */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -20,9 +18,9 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
     const timer = setTimeout(
       () => {
         setIsVisible(false);
-        setTimeout(onComplete, reducedMotion ? 120 : 500);
+        setTimeout(onComplete, reducedMotion ? 100 : 320);
       },
-      reducedMotion ? 250 : 1050
+      reducedMotion ? 220 : 900
     );
     return () => clearTimeout(timer);
   }, [onComplete, reducedMotion]);
@@ -33,17 +31,16 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         <motion.div
           className={styles.container}
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: 'blur(6px)' }}
-          transition={{ duration: reducedMotion ? 0.12 : 0.5, ease: [0.4, 0, 0.2, 1] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reducedMotion ? 0.1 : 0.28, ease: [0.4, 0, 0.2, 1] }}
         >
           <motion.div
             className={styles.mascotHolder}
-            initial={reducedMotion ? false : { opacity: 0, scale: 0.82 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.22, 0.9, 0.3, 1] }}
+            initial={reducedMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <div className={styles.halo} aria-hidden="true" />
-            <CitronMascot size={76} />
+            <CitronMascot size={50} />
           </motion.div>
         </motion.div>
       )}

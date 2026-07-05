@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <rect width="100" height="100" rx="22" fill="#0a0908"/>
+  <g transform="translate(14,14) scale(0.72)" style="--citron-mascot-fill: #c9a227">
+    <g id="mascot-eyes" fill="var(--citron-mascot-fill, #c9a227)" stroke="none">
+      <g id="mascot-eye-left">
+        <rect x="31" y="17" width="13" height="34" />
+      </g>
+      <g id="mascot-eye-right">
+        <rect x="56" y="17" width="13" height="34" />
+      </g>
+    </g>
+    <g id="mascot-smile" fill="none" stroke-linecap="butt" stroke-linejoin="miter">
+      <path
+        d="M 12 40 A 38 38 0 0 0 88 40"
+        stroke="var(--citron-mascot-fill, #c9a227)"
+        stroke-width="10"
+      />
+    </g>
+  </g>
+</svg>

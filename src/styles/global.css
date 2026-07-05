@@ -1,4 +1,5 @@
-/* IS - base tokens from @citron-systems/citron-ds */
+/* IS - base tokens from @citron-systems/citron-ds v2 */
+@import '@citron-systems/citron-ds/fonts';
 @import '@citron-systems/citron-ds/css';
 
 /* Project tokens - semantic aliases */
@@ -12,7 +13,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base styles - merge from global.scss */
+/* Base styles — citron-ds tokens imported above */
 @layer base {
   *,
   *::before,
@@ -31,7 +32,7 @@
   }
 
   body {
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-family: var(--inkblot-typography-font-family-sans);
     font-size: var(--inkblot-typography-font-size-base);
     line-height: var(--inkblot-typography-line-height-normal);
     color: var(--color-text-primary);
@@ -40,11 +41,11 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--inkblot-typography-font-family-display);
     font-weight: var(--inkblot-typography-font-weight-semibold);
     line-height: var(--inkblot-typography-line-height-tight);
     color: var(--inkblot-semantic-color-text-primary);
-    letter-spacing: -0.02em;
+    letter-spacing: var(--inkblot-typography-letter-spacing-tight);
   }
 
   input,

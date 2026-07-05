@@ -7,7 +7,7 @@ export const MOCK_TENANTS: Tenant[] = [
     id: 'citron',
     slug: 'citron',
     name: 'IS',
-    primaryColor: '#c4a030',
+    primaryColor: '#c9a227',
     redirectUrl: '/',
     allowedAppIds: [],
   },
@@ -16,7 +16,7 @@ export const MOCK_TENANTS: Tenant[] = [
     slug: 'acme-corp',
     name: 'Acme Corporation',
     logoUrl: '/logos/acme.svg',
-    primaryColor: '#c4a030',
+    primaryColor: '#c9a227',
     redirectUrl: 'https://app.acme.example.com',
     allowedAppIds: ['app-1', 'app-2'],
   },
@@ -43,7 +43,7 @@ export const MOCK_TENANTS: Tenant[] = [
     slug: 'inkblot-studio',
     name: 'Inkblot Studio',
     logoUrl: '/logos/inkblot.svg',
-    primaryColor: '#c4a030',
+    primaryColor: '#c9a227',
     redirectUrl: 'https://inkblot.example.com',
     allowedAppIds: ['app-1', 'app-2', 'app-3', 'app-4'],
   },
@@ -60,7 +60,7 @@ export const MOCK_TENANTS: Tenant[] = [
   { id: 'media-hub', slug: 'media-hub', name: 'Media Hub', primaryColor: '#EC4899', redirectUrl: 'https://media.example.com', allowedAppIds: ['app-1'] },
   { id: 'finance-pro', slug: 'finance-pro', name: 'Finance Pro', primaryColor: '#358c46', redirectUrl: 'https://finance.example.com', allowedAppIds: ['app-1', 'app-2', 'app-3'] },
   { id: 'health-care', slug: 'health-care', name: 'Health Care Plus', primaryColor: '#5790ad', redirectUrl: 'https://health.example.com', allowedAppIds: ['app-1'] },
-  { id: 'edu-platform', slug: 'edu-platform', name: 'Edu Platform', primaryColor: '#c4a030', redirectUrl: 'https://edu.example.com', allowedAppIds: ['app-1', 'app-2'] },
+  { id: 'edu-platform', slug: 'edu-platform', name: 'Edu Platform', primaryColor: '#c9a227', redirectUrl: 'https://edu.example.com', allowedAppIds: ['app-1', 'app-2'] },
 ];
 
 export function getTenantById(id: string): Tenant | undefined {

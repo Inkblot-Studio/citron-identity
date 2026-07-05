@@ -3,26 +3,42 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  will-change: transform;
+}
+
+.tilt {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 62%;
 }
 
 .svg {
   width: 100%;
   height: 100%;
   overflow: visible;
-  // A whisper of shadow lifts the gold mark off the white paper.
-  filter: drop-shadow(0 8px 18px rgba(var(--color-lime-rgb, 196, 160, 48), 0.24));
 }
 
 .eye {
-  fill: var(--citron-mascot-fill, var(--color-lime, #c4a030));
+  fill: var(--citron-mascot-fill, var(--color-lime, var(--inkblot-color-accent-citron-500)));
   transform-box: fill-box;
   transform-origin: center;
 }
 
+/* Blur the eyes so Citron visibly can't read the masked password field. */
+.eyesCovered {
+  filter: blur(2.6px);
+  opacity: 0.9;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
 .smile {
   fill: none;
-  stroke: var(--citron-mascot-fill, var(--color-lime, #c4a030));
+  stroke: var(--citron-mascot-fill, var(--color-lime, var(--inkblot-color-accent-citron-500)));
   stroke-linecap: butt;
-  stroke-linejoin: round;
+  stroke-linejoin: miter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eyesCovered {
+    transition: none;
+  }
 }

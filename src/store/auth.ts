@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { User } from '@/types/auth';
+import type { AccountCheck, User } from '@/types/auth';
 
 export type { User };
 import { authApi, ACCESS_TOKEN_STORAGE_KEY } from '@/lib/auth-api';
@@ -20,6 +20,7 @@ export interface AuthState {
 }
 
 export interface AuthActions {
+  checkAccount: (email: string) => Promise<AccountCheck>;
   login: (email: string, password: string, tenantId: string) => Promise<void>;
   signup: (payload: {
     email: string;
@@ -81,6 +82,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   pendingEmailVerification: false,
   mfaSecret: undefined,
   mfaQrDataUrl: undefined,
+
+  checkAccount: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await authApi.checkAccount(email);
+      set({ isLoading: false });
+      return result;
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Could not verify email',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
 
   login: async (email, password, tenantId) => {
     set({ isLoading: true, error: null });

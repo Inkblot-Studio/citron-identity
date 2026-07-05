@@ -77,8 +77,9 @@ export default {
         full: 'var(--inkblot-radius-full)',
       },
       fontFamily: {
-        sans: ['Outfit', 'Inter', 'SF Pro Text', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['Outfit', 'SF Pro Display', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['var(--inkblot-typography-font-family-sans)'],
+        display: ['var(--inkblot-typography-font-family-display)'],
+        mono: ['var(--inkblot-typography-font-family-mono)'],
       },
       fontSize: {
         xs: 'var(--inkblot-typography-font-size-xs)',

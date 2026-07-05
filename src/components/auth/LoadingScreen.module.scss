@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
+  background: var(--inkblot-semantic-color-background-secondary);
 }
 
 .mascotHolder {
@@ -13,36 +13,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.halo {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(var(--color-lime-rgb, 196, 160, 48), 0.14) 0%,
-    rgba(var(--color-lime-rgb, 196, 160, 48), 0.05) 45%,
-    transparent 70%
-  );
-  animation: pulse 2.6s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 0.7;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .halo {
-    animation: none;
-  }
 }

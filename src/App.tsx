@@ -10,8 +10,37 @@ import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { MFASetupPage } from './pages/MFASetupPage';
 import { MFAVerifyPage } from './pages/MFAVerifyPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { LegalPage } from './pages/LegalPage';
 import { ProtectedRoute } from './components/routes/ProtectedRoute';
+import { usePageTitle } from './hooks/usePageTitle';
 import styles from './App.module.scss';
+
+function AppRoutes() {
+  usePageTitle();
+
+  return (
+    <Routes>
+      <Route path="/" element={<AuthPortal />} />
+      <Route path="/login" element={<AuthPortal />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+      <Route path="/mfa/setup" element={<MFASetupPage />} />
+      <Route path="/mfa/verify" element={<MFAVerifyPage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/legal/:slug" element={<LegalPage />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
 
 function App() {
   const { isInitializing, initialize } = useAuthStore();
@@ -28,25 +57,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className={styles.app} data-theme="light">
-        <Routes>
-          <Route path="/" element={<AuthPortal />} />
-          <Route path="/login" element={<AuthPortal />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-          <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
-          <Route path="/mfa/setup" element={<MFASetupPage />} />
-          <Route path="/mfa/verify" element={<MFAVerifyPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+        <AppRoutes />
       </div>
     </BrowserRouter>
   );

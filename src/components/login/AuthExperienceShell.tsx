@@ -1,17 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, useReducedMotion, useSpring } from 'framer-motion';
 import { CitronMascot, type MascotMood } from './CitronMascot';
 import { GridCanvas } from './GridCanvas';
-import {
-  cardEase,
-  clamp,
-  HALF_X,
-  HALF_Y,
-  MASCOT_SIZE,
-  pushOutsideKeepOut,
-  randomValidPoint,
-  type BoundsRect,
-} from './authSceneUtils';
+import { cardEase, clamp } from './authSceneUtils';
+import { AuthExperienceContext } from './AuthExperienceContext';
 import styles from './AuthExperience.module.scss';
 
 interface AuthExperienceShellProps {
@@ -20,11 +13,15 @@ interface AuthExperienceShellProps {
   mood: MascotMood;
   celebrating?: boolean;
   attentive?: boolean;
+  /** Mascot shuts both eyes while a hidden password field is focused. */
+  eyesClosed?: boolean;
+  /** Mascot blurs its eyes and looks away — "not peeking" at the password. */
+  covering?: boolean;
 }
 
 /**
- * Shared auth stage: white grid paper, roaming Citron mascot, and a floating
- * glass card. Used by login, signup, and forgot-password flows.
+ * Shared auth stage: white grid paper and a Citron mascot anchored to the
+ * active step header via a portal. Size and spacing follow the card container.
  */
 export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
   children,
@@ -32,37 +29,27 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
   mood,
   celebrating = false,
   attentive = false,
+  eyesClosed = false,
+  covering = false,
 }) => {
   const reducedMotion = useReducedMotion();
   const [winkSignal, setWinkSignal] = useState(0);
   const [intro, setIntro] = useState(!reducedMotion);
-  const cardRef = useRef<HTMLElement>(null);
+  const [mascotSlot, setMascotSlot] = useState<HTMLElement | null>(null);
+  const mascotRef = useRef<HTMLDivElement>(null);
 
-  const initX =
-    typeof window !== 'undefined' ? window.innerWidth * 0.5 - HALF_X : 0;
-  const initY =
-    typeof window !== 'undefined' ? window.innerHeight * 0.14 - HALF_Y : 0;
+  const registerMascotSlot = useCallback((el: HTMLElement | null) => {
+    setMascotSlot(el);
+  }, []);
 
-  const mx = useSpring(initX, { stiffness: 60, damping: 20, mass: 1 });
-  const my = useSpring(initY, { stiffness: 60, damping: 20, mass: 1 });
   const eyeX = useSpring(0, { stiffness: 140, damping: 20 });
   const eyeY = useSpring(0, { stiffness: 140, damping: 20 });
   const spin = useSpring(0, { stiffness: 42, damping: 12, mass: 1 });
-
-  const cursor = useRef({ x: -9999, y: -9999 });
-  const bounds = useRef({ w: 1280, h: 800 });
   const spinAcc = useRef(0);
-  const wanderTarget = useRef({ x: initX + HALF_X, y: initY + HALF_Y });
-  const nextWanderAt = useRef(0);
-
-  const doSpin = useCallback(() => {
-    spinAcc.current += 360;
-    spin.set(spinAcc.current);
-  }, [spin]);
 
   useEffect(() => {
     if (reducedMotion) return;
-    const t = setTimeout(() => setIntro(false), 2200);
+    const t = setTimeout(() => setIntro(false), 1800);
     return () => clearTimeout(t);
   }, [reducedMotion]);
 
@@ -74,7 +61,7 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
       timer = setTimeout(() => {
         setWinkSignal((n) => n + 1);
         arm();
-      }, 12000);
+      }, 22000);
     };
     arm();
     const reset = () => arm();
@@ -89,157 +76,87 @@ export const AuthExperienceShell: React.FC<AuthExperienceShellProps> = ({
 
   useEffect(() => {
     if (reducedMotion) return;
-
-    const readBounds = () => {
-      bounds.current = { w: window.innerWidth, h: window.innerHeight };
-    };
-    readBounds();
-
     const onMove = (e: PointerEvent) => {
-      cursor.current = { x: e.clientX, y: e.clientY };
+      const el = mascotRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const gazeSpan = Math.max(r.width * 4.5, 140);
+      eyeX.set(clamp((e.clientX - cx) / gazeSpan, -1, 1));
+      eyeY.set(clamp((e.clientY - cy) / gazeSpan, -1, 1));
     };
     const onLeave = () => {
-      cursor.current = { x: -9999, y: -9999 };
+      eyeX.set(0);
+      eyeY.set(0);
     };
-
-    window.addEventListener('resize', readBounds);
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('pointerleave', onLeave);
-
-    const keepOutZone = (): BoundsRect => {
-      const { w, h } = bounds.current;
-      const card = cardRef.current?.getBoundingClientRect();
-      if (!card) {
-        return {
-          left: w * 0.28,
-          top: h * 0.22,
-          right: w * 0.72,
-          bottom: h * 0.78,
-        };
-      }
-      return {
-        left: card.left - 128,
-        top: card.top - 128,
-        right: card.right + 128,
-        bottom: card.bottom + 128,
-      };
-    };
-
-    const resolveTarget = (rawX: number, rawY: number) => {
-      const { w, h } = bounds.current;
-      return pushOutsideKeepOut(rawX, rawY, keepOutZone(), w, h);
-    };
-
-    nextWanderAt.current = performance.now() + 3200;
-
-    let raf = 0;
-    const tick = () => {
-      const now = performance.now();
-      const { w, h } = bounds.current;
-      const cx = mx.get() + HALF_X;
-      const cy = my.get() + HALF_Y;
-      const { x: curX, y: curY } = cursor.current;
-      const hasCursor = curX > -9000;
-
-      if (hasCursor) {
-        eyeX.set(clamp((curX - cx) / 260, -1, 1));
-        eyeY.set(clamp((curY - cy) / 220, -1, 1));
-      } else {
-        eyeX.set(0);
-        eyeY.set(0);
-      }
-
-      let targetX: number;
-      let targetY: number;
-
-      if (hasCursor) {
-        const raw = resolveTarget(curX, curY - 72);
-        targetX = raw.x;
-        targetY = raw.y;
-      } else if (now > nextWanderAt.current) {
-        const next = randomValidPoint(w, h, keepOutZone());
-        wanderTarget.current = next;
-        targetX = next.x;
-        targetY = next.y;
-        nextWanderAt.current = now + 3400 + Math.random() * 2400;
-      } else {
-        targetX = wanderTarget.current.x;
-        targetY = wanderTarget.current.y;
-      }
-
-      const safe = resolveTarget(targetX, targetY);
-      mx.set(safe.x - HALF_X);
-      my.set(safe.y - HALF_Y);
-
-      raf = requestAnimationFrame(tick);
-    };
-
-    raf = requestAnimationFrame(tick);
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', readBounds);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerleave', onLeave);
     };
-  }, [reducedMotion, mx, my, eyeX, eyeY]);
-
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = setInterval(doSpin, 6000);
-    return () => clearInterval(id);
-  }, [reducedMotion, doSpin]);
-
-  useEffect(() => {
-    if (reducedMotion || !attentive) return;
-    doSpin();
-  }, [attentive, reducedMotion, doSpin]);
+  }, [reducedMotion, eyeX, eyeY]);
 
   useEffect(() => {
     if (reducedMotion || !celebrating) return;
-    doSpin();
-  }, [celebrating, reducedMotion, doSpin]);
+    spinAcc.current += 360;
+    spin.set(spinAcc.current);
+  }, [celebrating, reducedMotion, spin]);
+
+  const mascotNode = (
+    <motion.div
+      ref={mascotRef}
+      className={styles.mascotHost}
+      layoutId={reducedMotion ? undefined : 'auth-mascot'}
+      initial={reducedMotion ? false : { opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.35, ease: cardEase }}
+    >
+      <CitronMascot
+        mood={mood}
+        fluid
+        pointerX={eyeX}
+        pointerY={eyeY}
+        spin={spin}
+        attentive={attentive}
+        introLook={intro}
+        winkSignal={winkSignal}
+        eyesClosed={eyesClosed}
+        covering={covering}
+      />
+    </motion.div>
+  );
+
+  const contextValue = {
+    registerMascotSlot,
+    mood,
+    attentive,
+    eyesClosed,
+    covering,
+    celebrating,
+  };
 
   return (
-    <div className={styles.stage}>
-      <GridCanvas className={styles.grid} />
+    <AuthExperienceContext.Provider value={contextValue}>
+      <div className={styles.stage}>
+        <GridCanvas className={styles.grid} />
 
-      {reducedMotion ? (
-        <div className={styles.roamerStatic}>
-          <CitronMascot mood={mood} size={MASCOT_SIZE} winkSignal={winkSignal} />
-        </div>
-      ) : (
-        <motion.div
-          className={styles.roamer}
-          style={{ x: mx, y: my }}
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: cardEase }}
-        >
-          <CitronMascot
-            mood={mood}
-            size={MASCOT_SIZE}
-            pointerX={eyeX}
-            pointerY={eyeY}
-            spin={spin}
-            attentive={attentive}
-            introLook={intro}
-            winkSignal={winkSignal}
-          />
-        </motion.div>
-      )}
-
-      <main className={styles.layout}>
-        <motion.section
-          className={styles.panel}
-          ref={cardRef}
-          initial={reducedMotion ? false : { opacity: 0, y: 26, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.85, ease: cardEase, delay: 0.15 }}
-        >
-          <div className={styles.card}>{children}</div>
-          {footer}
-        </motion.section>
-      </main>
-    </div>
+        <main className={styles.layout}>
+          <motion.section
+            className={styles.panel}
+            initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: cardEase, delay: 0.08 }}
+          >
+            <div className={styles.card}>
+              {children}
+              {mascotSlot ? createPortal(mascotNode, mascotSlot) : null}
+            </div>
+            {footer}
+          </motion.section>
+        </main>
+      </div>
+    </AuthExperienceContext.Provider>
   );
 };

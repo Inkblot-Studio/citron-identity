@@ -2,37 +2,33 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 56px;
-  padding: 0 14px;
-  border-radius: 16px;
-  background: #f6f6f4;
-  border: 1px solid rgba(20, 22, 35, 0.06);
+  gap: 10px;
+  height: 48px;
+  padding: 0 12px;
+  border-radius: var(--inkblot-radius-md);
+  background: var(--inkblot-semantic-color-background-primary);
+  border: 1px solid var(--inkblot-semantic-color-border-default);
   transition:
-    border-color 0.3s cubic-bezier(0.2, 0.6, 0.2, 1),
-    background-color 0.3s cubic-bezier(0.2, 0.6, 0.2, 1),
-    box-shadow 0.35s cubic-bezier(0.2, 0.6, 0.2, 1);
+    border-color var(--inkblot-duration-fast) var(--inkblot-easing-default),
+    background-color var(--inkblot-duration-fast) var(--inkblot-easing-default);
 
   &:hover:not(.focused) {
-    border-color: rgba(20, 22, 35, 0.12);
-    background: #f3f3f0;
+    border-color: var(--inkblot-semantic-color-border-strong);
   }
 }
 
 .focused {
-  background: #ffffff;
-  border-color: rgba(var(--color-lime-rgb, 196, 160, 48), 0.6);
-  box-shadow:
-    0 0 0 4px rgba(var(--color-lime-rgb, 196, 160, 48), 0.14),
-    0 10px 26px -16px rgba(var(--color-lime-rgb, 196, 160, 48), 0.5);
+  background: var(--inkblot-semantic-color-background-secondary);
+  border-color: var(--inkblot-semantic-color-border-focus);
+  /* Soft, uniform ring that follows the radius evenly (no thick corners). */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--inkblot-color-accent-citron-500) 16%, transparent);
 }
 
 .error {
-  border-color: rgba(var(--color-error-rgb, 190, 62, 53), 0.55);
-  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  border-color: var(--inkblot-semantic-color-status-error);
 
   &.focused {
-    box-shadow: 0 0 0 4px rgba(var(--color-error-rgb, 190, 62, 53), 0.14);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--inkblot-semantic-color-status-error) 16%, transparent);
   }
 }
 
@@ -41,44 +37,44 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(20, 22, 35, 0.4);
-  transition: color 0.3s ease;
+  color: var(--inkblot-semantic-color-text-tertiary);
+  transition: color var(--inkblot-duration-fast) var(--inkblot-easing-default);
 }
 
 .focused .leading {
-  color: var(--color-lime-dark, #a5851f);
+  color: var(--inkblot-semantic-color-text-secondary);
 }
 
 .error .leading {
-  color: rgba(var(--color-error-rgb, 190, 62, 53), 0.85);
+  color: var(--inkblot-semantic-color-status-error);
 }
 
 .input {
   flex: 1;
   min-width: 0;
   height: 100%;
-  font-size: 15px;
-  font-family: 'Outfit', sans-serif;
-  color: #1b1b18;
+  font-size: var(--inkblot-typography-font-size-base);
+  font-family: var(--inkblot-typography-font-family-sans);
+  color: var(--inkblot-semantic-color-text-primary);
   background: transparent;
   border: none;
   outline: none;
-  caret-color: var(--color-lime-dark, #a5851f);
+  caret-color: var(--inkblot-semantic-color-interactive-primary);
 
   &::placeholder {
-    color: rgba(20, 22, 35, 0.38);
+    color: var(--inkblot-semantic-color-text-tertiary);
   }
 
   &::selection {
-    background: rgba(var(--color-lime-rgb, 196, 160, 48), 0.28);
+    background: color-mix(in srgb, var(--inkblot-color-accent-citron-500) 22%, transparent);
   }
 
   &:-webkit-autofill,
   &:-webkit-autofill:hover,
   &:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
-    -webkit-text-fill-color: #1b1b18;
-    caret-color: var(--color-lime-dark, #a5851f);
+    -webkit-box-shadow: 0 0 0 1000px var(--inkblot-semantic-color-background-secondary) inset;
+    -webkit-text-fill-color: var(--inkblot-semantic-color-text-primary);
+    caret-color: var(--inkblot-semantic-color-interactive-primary);
     transition: background-color 999999s ease-in-out 0s;
   }
 }
@@ -89,30 +85,10 @@
   flex-shrink: 0;
 }
 
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(-5px);
-  }
-  40% {
-    transform: translateX(4px);
-  }
-  60% {
-    transform: translateX(-3px);
-  }
-  80% {
-    transform: translateX(2px);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .field,
   .leading,
   .error {
     transition: none;
-    animation: none;
   }
 }

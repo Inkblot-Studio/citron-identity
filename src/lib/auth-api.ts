@@ -1,4 +1,4 @@
-import type { User } from '@/types/auth';
+import type { AccountCheck, User } from '@/types/auth';
 import type { Tenant } from '@/types/tenant';
 import {
   mockLogin,
@@ -13,6 +13,7 @@ import {
   mockVerifyMFA,
   mockGetTenantsForUser,
   mockCheckUsernameAvailability,
+  mockCheckAccount,
 } from '@/mocks/auth';
 
 export const ACCESS_TOKEN_STORAGE_KEY = 'inkid_access_token';
@@ -20,6 +21,7 @@ export const ACCESS_TOKEN_STORAGE_KEY = 'inkid_access_token';
 const API_BASE_URL = (import.meta.env.VITE_AUTH_API_URL as string | undefined)?.replace(/\/$/, '');
 
 export interface AuthApi {
+  checkAccount(email: string): Promise<AccountCheck>;
   login(email: string, password: string, tenantId: string): Promise<{ user: User; requiresMfa?: boolean }>;
   signup(payload: {
     email: string;
@@ -164,6 +166,9 @@ async function realSignup(payload: {
 // Magic link, MFA setup/verify-by-userId, and tenant listing stay mocked — citron-identity-api
 // doesn't support tenants or magic links, and completes MFA via a ticket, not a userId.
 export const authApi: AuthApi = {
+  // Email-first lookup is a client UX concern; always mocked until the backend
+  // exposes a dedicated endpoint (safe to override in real integration).
+  checkAccount: mockCheckAccount,
   login: API_BASE_URL ? realLogin : mockLogin,
   signup: API_BASE_URL ? realSignup : mockSignup,
   checkUsernameAvailability: mockCheckUsernameAvailability,

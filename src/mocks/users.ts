@@ -39,6 +39,7 @@ export const MOCK_USERS: (User & { password: string })[] = [
     isAuthenticated: false,
     isEmailVerified: false,
     twoFactorEnabled: false,
+    authProvider: 'google',
     createdAt: '2024-02-10T09:00:00Z',
     tenants: [{ tenantId: 'citron', role: 'member' }, { tenantId: 'enterprise-demo', role: 'member' }],
   },
