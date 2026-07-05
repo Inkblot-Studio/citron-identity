@@ -40,7 +40,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <CitronMascot size={72} />
+            <CitronMascot size={50} />
           </motion.div>
         </motion.div>
       )}

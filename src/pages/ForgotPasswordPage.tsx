@@ -1,4 +1,4 @@
 import React from 'react';
-import { ForgotPasswordExperience } from '@/components/login/ForgotPasswordExperience';
+import { LoginExperience } from '@/components/login/LoginExperience';
 
-export const ForgotPasswordPage: React.FC = () => <ForgotPasswordExperience />;
+export const ForgotPasswordPage: React.FC = () => <LoginExperience start="forgot" />;

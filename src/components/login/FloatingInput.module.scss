@@ -20,14 +20,15 @@
 .focused {
   background: var(--inkblot-semantic-color-background-secondary);
   border-color: var(--inkblot-semantic-color-border-focus);
-  box-shadow: 0 0 0 1px var(--inkblot-semantic-color-border-focus);
+  /* Soft, uniform ring that follows the radius evenly (no thick corners). */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--inkblot-color-accent-citron-500) 16%, transparent);
 }
 
 .error {
   border-color: var(--inkblot-semantic-color-status-error);
 
   &.focused {
-    box-shadow: 0 0 0 1px var(--inkblot-semantic-color-status-error);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--inkblot-semantic-color-status-error) 16%, transparent);
   }
 }
 

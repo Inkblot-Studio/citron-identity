@@ -47,47 +47,55 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
+export const PASSWORD_REQUIREMENTS = [
+  { id: 'length', label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+  { id: 'lower', label: 'One lowercase letter', test: (p: string) => /[a-z]/.test(p) },
+  { id: 'upper', label: 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'number', label: 'One number', test: (p: string) => /[0-9]/.test(p) },
+  {
+    id: 'special',
+    label: 'One special character',
+    test: (p: string) => /[^A-Za-z0-9]/.test(p),
+  },
+] as const;
+
+export type PasswordRequirementStatus = {
+  id: (typeof PASSWORD_REQUIREMENTS)[number]['id'];
+  label: string;
+  met: boolean;
+};
+
 /**
  * Check password strength
  */
 export function getPasswordStrength(password: string): {
   score: number;
   feedback: string[];
+  requirements: PasswordRequirementStatus[];
 } {
-  const feedback: string[] = [];
-  let score = 0;
+  const requirements = PASSWORD_REQUIREMENTS.map((req) => ({
+    id: req.id,
+    label: req.label,
+    met: req.test(password),
+  }));
 
-  if (password.length >= 8) {
-    score += 1;
-  } else {
-    feedback.push('At least 8 characters');
-  }
+  const feedback = requirements.filter((r) => !r.met).map((r) => r.label);
+  const score = requirements.filter((r) => r.met).length;
 
-  if (/[a-z]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Include lowercase letters');
-  }
+  return { score, feedback, requirements };
+}
 
-  if (/[A-Z]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Include uppercase letters');
-  }
+export function passwordStrengthLabel(score: number): string {
+  if (score <= 2) return 'Weak';
+  if (score <= 3) return 'Fair';
+  if (score <= 4) return 'Good';
+  return 'Strong';
+}
 
-  if (/[0-9]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Include numbers');
-  }
-
-  if (/[^A-Za-z0-9]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Include special characters');
-  }
-
-  return { score, feedback };
+export function passwordStrengthColor(score: number): string {
+  if (score <= 2) return 'var(--inkblot-semantic-color-status-error)';
+  if (score <= 3) return 'var(--inkblot-semantic-color-status-warning)';
+  return 'var(--inkblot-semantic-color-status-success)';
 }
 
 /**

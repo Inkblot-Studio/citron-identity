@@ -1,0 +1,108 @@
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--inkblot-semantic-color-background-secondary);
+  color: var(--inkblot-semantic-color-text-primary);
+  font-family: var(--inkblot-typography-font-family-sans);
+}
+
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 2rem);
+  border-bottom: 1px solid var(--inkblot-semantic-color-border-default);
+  background: color-mix(in srgb, var(--inkblot-semantic-color-background-secondary) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.backLink {
+  font-size: var(--inkblot-typography-font-size-sm);
+  font-weight: var(--inkblot-typography-font-weight-medium);
+  color: var(--inkblot-semantic-color-text-link);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--inkblot-semantic-color-border-focus);
+    outline-offset: 2px;
+    border-radius: var(--inkblot-radius-sm);
+  }
+}
+
+.article {
+  width: min(48rem, 100%);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem) clamp(3rem, 8vw, 5rem);
+}
+
+.eyebrow {
+  font-size: var(--inkblot-typography-font-size-xs);
+  font-weight: var(--inkblot-typography-font-weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--inkblot-semantic-color-text-tertiary);
+}
+
+.title {
+  margin-top: 0.75rem;
+  font-family: var(--inkblot-typography-font-family-display);
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: var(--inkblot-typography-font-weight-semibold);
+  letter-spacing: var(--inkblot-typography-letter-spacing-tight);
+  line-height: 1.15;
+}
+
+.summary {
+  margin-top: 0.75rem;
+  max-width: 42rem;
+  font-size: var(--inkblot-typography-font-size-md);
+  line-height: var(--inkblot-typography-line-height-relaxed);
+  color: var(--inkblot-semantic-color-text-secondary);
+}
+
+.updated {
+  margin-top: 1rem;
+  font-size: var(--inkblot-typography-font-size-sm);
+  color: var(--inkblot-semantic-color-text-tertiary);
+}
+
+.sections {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section {
+  scroll-margin-top: 4rem;
+}
+
+.heading {
+  font-size: clamp(1.0625rem, 2.5vw, 1.25rem);
+  font-weight: var(--inkblot-typography-font-weight-semibold);
+  letter-spacing: var(--inkblot-typography-letter-spacing-tight);
+}
+
+.body {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+
+  p {
+    font-size: var(--inkblot-typography-font-size-sm);
+    line-height: 1.75;
+    color: var(--inkblot-semantic-color-text-secondary);
+  }
+}
+
+@media print {
+  .topBar {
+    position: static;
+    backdrop-filter: none;
+  }
+}

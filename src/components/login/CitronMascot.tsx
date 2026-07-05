@@ -13,8 +13,10 @@ export type MascotMood = 'idle' | 'shy' | 'confused' | 'celebrating' | 'curious'
 
 interface CitronMascotProps {
   mood?: MascotMood;
-  /** Rendered width in px (height follows the fixed viewBox aspect). */
+  /** Rendered width in px (height follows the fixed viewBox aspect). Ignored when `fluid`. */
   size?: number;
+  /** Fill the parent box — parent must set width/height (e.g. via CSS variables). */
+  fluid?: boolean;
   /** Normalized eye-target direction (-1..1), ideally spring-smoothed. */
   pointerX?: MotionValue<number>;
   pointerY?: MotionValue<number>;
@@ -28,6 +30,8 @@ interface CitronMascotProps {
   winkSignal?: number;
   /** Both eyes shut — e.g. while a hidden password field is focused. */
   eyesClosed?: boolean;
+  /** Covers/blurs the eyes and looks away — "I'm not peeking at your password". */
+  covering?: boolean;
   className?: string;
 }
 
@@ -82,6 +86,7 @@ const BODY_VARIANTS: Variants = {
 export const CitronMascot: React.FC<CitronMascotProps> = ({
   mood = 'idle',
   size = 200,
+  fluid = false,
   pointerX,
   pointerY,
   spin,
@@ -89,6 +94,7 @@ export const CitronMascot: React.FC<CitronMascotProps> = ({
   introLook = false,
   winkSignal = 0,
   eyesClosed = false,
+  covering = false,
   className,
 }) => {
   const reducedMotion = useReducedMotion();
@@ -102,11 +108,14 @@ export const CitronMascot: React.FC<CitronMascotProps> = ({
   const py = pointerY ?? fallback;
   const spinValue = spin ?? spinFallback;
 
-  const eyeDx = useTransform(px, (v) => (eyesClosed ? 0 : v * 2.2));
-  const eyeDy = useTransform(py, (v) => (eyesClosed ? 0 : v * 1.6));
+  // Eyes are "hidden" when the field is a masked password (closed or covered).
+  const hidden = eyesClosed || covering;
+
+  const eyeDx = useTransform(px, (v) => (hidden ? 0 : v * 2.2));
+  const eyeDy = useTransform(py, (v) => (hidden ? 0 : v * 1.6));
 
   useEffect(() => {
-    if (reducedMotion || mood === 'celebrating' || eyesClosed) return;
+    if (reducedMotion || mood === 'celebrating' || hidden) return;
     let cancelled = false;
 
     const schedule = (delay: number) => {
@@ -126,75 +135,92 @@ export const CitronMascot: React.FC<CitronMascotProps> = ({
       cancelled = true;
       clearTimeout(blinkTimer.current);
     };
-  }, [reducedMotion, mood, eyesClosed]);
+  }, [reducedMotion, mood, hidden]);
 
   useEffect(() => {
-    if (!winkSignal || reducedMotion || eyesClosed) return;
+    if (!winkSignal || reducedMotion || hidden) return;
     setWinking(true);
     const t = setTimeout(() => setWinking(false), 280);
     return () => clearTimeout(t);
-  }, [winkSignal, reducedMotion, eyesClosed]);
+  }, [winkSignal, reducedMotion, hidden]);
 
   const moodScale = EYE_SCALE[mood] * (attentive && mood === 'idle' ? 1.04 : 1);
   const closedScaleY = 0.05;
-  const leftEyeScaleY = eyesClosed || blinking || winking ? closedScaleY : moodScale;
-  const rightEyeScaleY = eyesClosed || blinking ? closedScaleY : moodScale;
+  // While covering, eyes stay a touch open but heavily blurred — reads as
+  // "squinting away" rather than a plain blink.
+  const coverScaleY = 0.34;
+  const eyeScaleFor = (extraClosed: boolean) => {
+    if (covering) return coverScaleY;
+    if (extraClosed || eyesClosed) return closedScaleY;
+    return moodScale;
+  };
+  const leftEyeScaleY = eyeScaleFor(blinking || winking);
+  const rightEyeScaleY = eyeScaleFor(blinking);
 
   return (
     <motion.div
       className={`${styles.mascot} ${className ?? ''}`}
       style={{
-        width: size,
-        height: size,
+        width: fluid ? '100%' : size,
+        height: fluid ? '100%' : size,
         rotate: reducedMotion ? 0 : spinValue,
       }}
       variants={reducedMotion ? undefined : BODY_VARIANTS}
       animate={reducedMotion ? undefined : mood}
       initial={false}
-      data-eyes-closed={eyesClosed || undefined}
+      data-eyes-closed={hidden || undefined}
     >
-      <svg viewBox="0 0 100 100" role="img" aria-label="Citron mascot" className={styles.svg}>
-        <motion.g style={reducedMotion ? undefined : { x: eyeDx, y: eyeDy }}>
+      <motion.div
+        className={styles.tilt}
+        animate={reducedMotion ? undefined : { rotate: 0, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+      >
+        <svg viewBox="0 0 100 100" role="img" aria-label="Citron mascot" className={styles.svg}>
           <motion.g
-            animate={
-              introLook && !reducedMotion && !eyesClosed ? { x: [0, -3, -3, 3, 3, 0] } : { x: 0 }
-            }
-            transition={{
-              duration: 1.4,
-              delay: 0.25,
-              times: [0, 0.18, 0.4, 0.58, 0.82, 1],
-              ease: 'easeInOut',
-            }}
+            className={covering ? styles.eyesCovered : undefined}
+            style={reducedMotion ? undefined : { x: eyeDx, y: eyeDy }}
           >
-            <motion.rect
-              className={styles.eye}
-              x={LEFT_EYE.x}
-              y={LEFT_EYE.y}
-              width={LEFT_EYE.width}
-              height={LEFT_EYE.height}
-              animate={{ scaleY: leftEyeScaleY }}
+            <motion.g
+              animate={
+                introLook && !reducedMotion && !hidden ? { x: [0, -3, -3, 3, 3, 0] } : { x: 0 }
+              }
               transition={{
-                duration: eyesClosed || blinking || winking ? 0.14 : 0.22,
-                ease: 'easeOut',
+                duration: 1.4,
+                delay: 0.25,
+                times: [0, 0.18, 0.4, 0.58, 0.82, 1],
+                ease: 'easeInOut',
               }}
-            />
-            <motion.rect
-              className={styles.eye}
-              x={RIGHT_EYE.x}
-              y={RIGHT_EYE.y}
-              width={RIGHT_EYE.width}
-              height={RIGHT_EYE.height}
-              animate={{ scaleY: rightEyeScaleY }}
-              transition={{
-                duration: eyesClosed || blinking ? 0.14 : 0.22,
-                ease: 'easeOut',
-              }}
-            />
+            >
+              <motion.rect
+                className={styles.eye}
+                x={LEFT_EYE.x}
+                y={LEFT_EYE.y}
+                width={LEFT_EYE.width}
+                height={LEFT_EYE.height}
+                animate={{ scaleY: leftEyeScaleY }}
+                transition={{
+                  duration: eyesClosed || blinking || winking ? 0.14 : 0.22,
+                  ease: 'easeOut',
+                }}
+              />
+              <motion.rect
+                className={styles.eye}
+                x={RIGHT_EYE.x}
+                y={RIGHT_EYE.y}
+                width={RIGHT_EYE.width}
+                height={RIGHT_EYE.height}
+                animate={{ scaleY: rightEyeScaleY }}
+                transition={{
+                  duration: eyesClosed || blinking ? 0.14 : 0.22,
+                  ease: 'easeOut',
+                }}
+              />
+            </motion.g>
           </motion.g>
-        </motion.g>
 
-        <path className={styles.smile} d={SMILE_PATH} strokeWidth={SMILE_WIDTH} />
-      </svg>
+          <path className={styles.smile} d={SMILE_PATH} strokeWidth={SMILE_WIDTH} />
+        </svg>
+      </motion.div>
     </motion.div>
   );
 };

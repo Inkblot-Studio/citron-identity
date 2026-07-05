@@ -1,4 +1,4 @@
-import type { User } from '@/types/auth';
+import type { AccountCheck, User } from '@/types/auth';
 import type { Tenant } from '@/types/tenant';
 import { findUserByEmail, findUserById, findUserByUsername, MOCK_USERS, MOCK_BACKUP_CODES } from './users';
 import { getTenantById } from './tenants';
@@ -42,6 +42,17 @@ export async function mockCheckUsernameAvailability(username: string): Promise<b
   return !isUsernameTaken(username);
 }
 
+export async function mockCheckAccount(email: string): Promise<AccountCheck> {
+  await delay(450);
+  const user = findUserByEmailOrSignedUp(email);
+  if (!user) return { exists: false };
+  return {
+    exists: true,
+    name: user.name?.trim().split(/\s+/)[0] || undefined,
+    provider: user.authProvider ?? null,
+  };
+}
+
 export async function mockLogin(
   email: string,
   password: string,
@@ -51,6 +62,9 @@ export async function mockLogin(
   const trimmedEmail = email?.trim() ?? '';
   const trimmedPassword = password?.trim() ?? '';
   const mockUser = findUserByEmailOrSignedUp(trimmedEmail);
+  if (mockUser?.authProvider) {
+    throw new Error(`This account signs in with ${mockUser.authProvider}. Use that provider instead.`);
+  }
   if (!mockUser || mockUser.password !== trimmedPassword) {
     throw new Error('Invalid email or password');
   }
