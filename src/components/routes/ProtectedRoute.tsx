@@ -11,8 +11,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
 
   if (!user?.isAuthenticated) {
-    const returnUrl = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/login?returnUrl=${returnUrl}`} replace state={{ from: location }} />;
+    const returnPath = location.pathname + location.search;
+    const params = new URLSearchParams();
+    params.set('returnUrl', returnPath);
+    return <Navigate to={`/login?${params.toString()}`} replace state={{ from: location }} />;
   }
 
   return <>{children}</>;

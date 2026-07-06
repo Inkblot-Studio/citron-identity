@@ -2,8 +2,12 @@ import { create } from 'zustand';
 import type { AccountCheck, User } from '@/types/auth';
 
 export type { User };
-import { authApi, ACCESS_TOKEN_STORAGE_KEY } from '@/lib/auth-api';
+import { authApi } from '@/lib/auth-api';
+import { clearTokens } from '@/lib/token-storage';
 import { useTenantStore } from './tenant';
+
+export type SignupStep = 'testimonials' | 'subscription' | 'account';
+export type SignupPlan = 'monthly' | 'yearly' | 'skipped';
 
 const STORAGE_KEY = 'inkid_user';
 const SESSION_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -17,6 +21,8 @@ export interface AuthState {
   pendingEmailVerification: boolean;
   mfaSecret?: string;
   mfaQrDataUrl?: string;
+  signupStep: SignupStep;
+  signupDraft: { plan?: SignupPlan };
 }
 
 export interface AuthActions {
@@ -41,9 +47,10 @@ export interface AuthActions {
   clearError: () => void;
   logout: () => void;
   initialize: () => Promise<void>;
-  completeTestimonials?: () => void;
-  selectPlan?: (plan: 'monthly' | 'yearly') => void;
-  skipSubscription?: () => void;
+  completeTestimonials: () => void;
+  selectPlan: (plan: 'monthly' | 'yearly') => void;
+  skipSubscription: () => void;
+  resetSignupFlow: () => void;
 }
 
 function persistUser(user: User | null): void {
@@ -82,6 +89,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   pendingEmailVerification: false,
   mfaSecret: undefined,
   mfaQrDataUrl: undefined,
+  signupStep: 'testimonials',
+  signupDraft: {},
 
   checkAccount: async (email) => {
     set({ isLoading: true, error: null });
@@ -276,7 +285,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
   logout: () => {
     persistUser(null);
-    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+    clearTokens();
     useTenantStore.getState().clearTenants();
     set({
       user: null,
@@ -285,16 +294,38 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       pendingEmailVerification: false,
       mfaSecret: undefined,
       mfaQrDataUrl: undefined,
+      signupStep: 'testimonials',
+      signupDraft: {},
     });
   },
 
-  completeTestimonials: () => set({}),
-  selectPlan: () => set({}),
-  skipSubscription: () => set({}),
+  completeTestimonials: () => set({ signupStep: 'subscription' }),
+
+  selectPlan: (plan) =>
+    set({
+      signupStep: 'account',
+      signupDraft: { plan },
+    }),
+
+  skipSubscription: () =>
+    set({
+      signupStep: 'account',
+      signupDraft: { plan: 'skipped' },
+    }),
+
+  resetSignupFlow: () => set({ signupStep: 'testimonials', signupDraft: {} }),
 
   initialize: async () => {
     set({ isInitializing: true });
     try {
+      const sessionUser = await authApi.getSession();
+      if (sessionUser?.isAuthenticated) {
+        persistUser(sessionUser);
+        useTenantStore.getState().loadTenantsForUser(sessionUser.id);
+        set({ user: sessionUser, isInitializing: false });
+        return;
+      }
+
       const user = loadPersistedUser();
       if (user) {
         useTenantStore.getState().loadTenantsForUser(user.id);

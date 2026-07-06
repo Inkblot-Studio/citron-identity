@@ -52,7 +52,9 @@ Set `VITE_AUTH_API_URL` in your environment (e.g. `https://api.example.com`).
     "createdAt": "2024-01-15T10:00:00Z",
     "tenants": [{"tenantId": "acme-corp", "role": "member"}]
   },
-  "requiresMfa": false
+  "requiresMfa": false,
+  "accessToken": "eyJ...",
+  "refreshToken": "eyJ..."
 }
 ```
 
@@ -173,6 +175,8 @@ export const authApi: AuthApi = useMock ? mockAuthApi : realAuthApi;
 ```
 
 4. Set `VITE_USE_MOCK_AUTH=false` and `VITE_AUTH_API_URL=https://your-api.com` for production
+
+The portal ships with `src/lib/real-auth-api.ts` implementing this contract. On boot, `initialize()` calls `GET /auth/me` when an access token is stored. After login/MFA, redirect URIs receive `?token=` when configured in `buildRedirectUrl`.
 
 ---
 

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, MailCheck, ShieldCheck, User } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
-import { ACCESS_TOKEN_STORAGE_KEY } from '@/lib/auth-api';
+import { getAccessToken } from '@/lib/token-storage';
 import { DEFAULT_TENANT_ID } from '@/mocks/tenants';
 import { generateUsername, isValidEmail } from '@/lib/utils';
 import type { AuthProviderId } from '@/types/auth';
@@ -109,7 +109,7 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
       const redirectUri = getPendingRedirectUri();
       if (redirectUri) {
         clearPendingRedirectUri();
-        const token = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? undefined;
+        const token = getAccessToken() ?? undefined;
         window.location.href = buildRedirectUrl(redirectUri, token);
       } else {
         navigate('/dashboard', { replace: true });

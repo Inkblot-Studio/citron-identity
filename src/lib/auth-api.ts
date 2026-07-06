@@ -15,10 +15,19 @@ import {
   mockCheckUsernameAvailability,
   mockCheckAccount,
 } from '@/mocks/auth';
+import {
+  ACCESS_TOKEN_STORAGE_KEY,
+  clearTokens,
+  getAccessToken,
+  setTokens,
+} from '@/lib/token-storage';
 
-export const ACCESS_TOKEN_STORAGE_KEY = 'inkid_access_token';
+export { ACCESS_TOKEN_STORAGE_KEY };
 
 const API_BASE_URL = (import.meta.env.VITE_AUTH_API_URL as string | undefined)?.replace(/\/$/, '');
+
+const useMock =
+  import.meta.env.VITE_USE_MOCK_AUTH !== 'false' || !import.meta.env.VITE_AUTH_API_URL;
 
 export interface AuthApi {
   checkAccount(email: string): Promise<AccountCheck>;
@@ -40,9 +49,10 @@ export interface AuthApi {
   confirmMFA(userId: string, code: string): Promise<void>;
   verifyMFA(userId: string, code: string): Promise<boolean>;
   getTenantsForUser(userId: string): Promise<Tenant[]>;
+  getSession(): Promise<User | null>;
 }
 
-// Shapes returned by citron-identity-api (POST /api/auth/login, /api/auth/register).
+// citron-identity-api (POST /api/auth/login, /api/auth/register, GET /api/auth/me)
 interface IdentityAuthResponse {
   accessToken: string;
   tokenType: string;
@@ -62,13 +72,32 @@ interface IdentityRegisterResponse {
   message: string;
 }
 
+interface IdentityMeResponse {
+  userId: string;
+  email: string;
+  displayName?: string;
+  emailVerified?: boolean;
+  mfaEnabled?: boolean;
+}
+
 async function readProblemMessage(res: Response, fallback: string): Promise<string> {
-  const problem = await res.json().catch(() => null) as { detail?: string; title?: string } | null;
+  const problem = (await res.json().catch(() => null)) as { detail?: string; title?: string } | null;
   return problem?.detail ?? problem?.title ?? fallback;
 }
 
-// citron-identity-api has no tenant concept — tenantId is kept for signature
-// compatibility with the mock API and callers, and only stored on the client.
+function mapMeToUser(data: IdentityMeResponse, tenantId: string): User {
+  return {
+    id: data.userId,
+    email: data.email,
+    name: data.displayName,
+    isAuthenticated: true,
+    isEmailVerified: data.emailVerified ?? true,
+    twoFactorEnabled: data.mfaEnabled ?? false,
+    createdAt: new Date().toISOString(),
+    tenants: [{ tenantId, role: 'member' }],
+  };
+}
+
 async function realLogin(
   email: string,
   password: string,
@@ -87,8 +116,6 @@ async function realLogin(
   const data = (await res.json()) as IdentityLoginResponse;
 
   if (data.mfaRequired) {
-    // citron-identity-api completes MFA via POST /api/auth/login/mfa + mfaTicket,
-    // not by userId — full MFA-during-login wiring is out of scope for now.
     return {
       user: {
         id: '',
@@ -104,7 +131,7 @@ async function realLogin(
   }
 
   const auth = data.authentication as IdentityAuthResponse;
-  localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, auth.accessToken);
+  setTokens(auth.accessToken);
 
   return {
     user: {
@@ -162,23 +189,53 @@ async function realSignup(payload: {
   };
 }
 
-// Real login/signup when VITE_AUTH_API_URL is set; mocks otherwise (e.g. UI-only dev).
-// Magic link, MFA setup/verify-by-userId, and tenant listing stay mocked — citron-identity-api
-// doesn't support tenants or magic links, and completes MFA via a ticket, not a userId.
-export const authApi: AuthApi = {
-  // Email-first lookup is a client UX concern; always mocked until the backend
-  // exposes a dedicated endpoint (safe to override in real integration).
-  checkAccount: mockCheckAccount,
-  login: API_BASE_URL ? realLogin : mockLogin,
-  signup: API_BASE_URL ? realSignup : mockSignup,
-  checkUsernameAvailability: mockCheckUsernameAvailability,
-  sendMagicLink: mockSendMagicLink,
-  verifyMagicLink: mockVerifyMagicLink,
-  sendPasswordReset: mockSendPasswordReset,
-  resetPassword: mockResetPassword,
-  verifyEmail: mockVerifyEmail,
-  setupMFA: mockSetupMFA,
-  confirmMFA: mockConfirmMFA,
-  verifyMFA: mockVerifyMFA,
-  getTenantsForUser: mockGetTenantsForUser,
-};
+async function realGetSession(): Promise<User | null> {
+  const token = getAccessToken();
+  if (!token) return null;
+
+  const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    clearTokens();
+    return null;
+  }
+
+  const data = (await res.json()) as IdentityMeResponse;
+  return mapMeToUser(data, 'citron');
+}
+
+export const authApi: AuthApi = useMock
+  ? {
+      checkAccount: mockCheckAccount,
+      login: mockLogin,
+      signup: mockSignup,
+      checkUsernameAvailability: mockCheckUsernameAvailability,
+      sendMagicLink: mockSendMagicLink,
+      verifyMagicLink: mockVerifyMagicLink,
+      sendPasswordReset: mockSendPasswordReset,
+      resetPassword: mockResetPassword,
+      verifyEmail: mockVerifyEmail,
+      setupMFA: mockSetupMFA,
+      confirmMFA: mockConfirmMFA,
+      verifyMFA: mockVerifyMFA,
+      getTenantsForUser: mockGetTenantsForUser,
+      getSession: async () => null,
+    }
+  : {
+      checkAccount: mockCheckAccount,
+      login: realLogin,
+      signup: realSignup,
+      checkUsernameAvailability: mockCheckUsernameAvailability,
+      sendMagicLink: mockSendMagicLink,
+      verifyMagicLink: mockVerifyMagicLink,
+      sendPasswordReset: mockSendPasswordReset,
+      resetPassword: mockResetPassword,
+      verifyEmail: mockVerifyEmail,
+      setupMFA: mockSetupMFA,
+      confirmMFA: mockConfirmMFA,
+      verifyMFA: mockVerifyMFA,
+      getTenantsForUser: mockGetTenantsForUser,
+      getSession: realGetSession,
+    };

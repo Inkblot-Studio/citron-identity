@@ -1,0 +1,7 @@
+{
+  "projectName": "Citron Identity",
+  "clients": [
+    { "id": "citron", "displayName": "Citron Identity (default)" },
+    { "id": "inkid", "displayName": "InkID Auth Portal" }
+  ]
+}

@@ -1,0 +1,35 @@
+import { buildRedirectUrl, clearPendingRedirectUri, getPendingRedirectUri } from '@/lib/redirect';
+import { getAccessToken } from '@/lib/token-storage';
+
+/**
+ * Where to send the user after a successful login / MFA / email verify.
+ * Prefers OAuth-style redirect_uri, then internal returnUrl, then dashboard.
+ */
+export function resolvePostAuthRedirect(search: string): {
+  type: 'external' | 'internal';
+  url: string;
+} {
+  const pending = getPendingRedirectUri();
+  if (pending) {
+    clearPendingRedirectUri();
+    return {
+      type: 'external',
+      url: buildRedirectUrl(pending, getAccessToken() ?? undefined),
+    };
+  }
+
+  const params = new URLSearchParams(search);
+  const returnUrl = params.get('returnUrl');
+  if (returnUrl) {
+    try {
+      const decoded = decodeURIComponent(returnUrl);
+      if (decoded.startsWith('/') && !decoded.startsWith('//')) {
+        return { type: 'internal', url: decoded };
+      }
+    } catch {
+      /* ignore malformed */
+    }
+  }
+
+  return { type: 'internal', url: '/dashboard' };
+}
