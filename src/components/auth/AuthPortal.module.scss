@@ -1,8 +1,39 @@
-// Optimized Animation System
-@keyframes fadeInUp {
+// =============================================================================
+// AuthPortal ? Adaptive Focus System
+// =============================================================================
+// Phase progression: idle ? present ? engaged ? flow
+// Each phase increases focus intensity and reduces peripheral UI.
+// The system is driven by [data-phase] on the container.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Keyframes
+// ---------------------------------------------------------------------------
+@keyframes portalReveal {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes haloBreath {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.03); }
+}
+
+@keyframes footerSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -10,37 +41,9 @@
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes blurIn {
-  from {
-    filter: blur(0px);
-    opacity: 1;
-  }
-  to {
-    filter: blur(50px) brightness(0.15) contrast(1.3);
-    opacity: 0.3;
-  }
-}
-
+// ---------------------------------------------------------------------------
+// Layout shell
+// ---------------------------------------------------------------------------
 .container {
   min-height: 100vh;
   display: flex;
@@ -49,35 +52,65 @@
   justify-content: flex-start;
   position: relative;
   padding: var(--space-4);
-  background: #ffffff;
+  padding-top: 22vh;
+  background: var(--color-bg-primary);
   overflow: hidden;
-  padding-top: 25vh;
+  isolation: isolate;
 }
 
-.background {
+// ---------------------------------------------------------------------------
+// Adaptive Focus Halo
+// ---------------------------------------------------------------------------
+// A large radial gradient that lives behind the form. It's invisible at idle,
+// gently appears when engaged, and intensifies in flow state ? creating a
+// "spotlight" effect that draws the eye to the form without any harsh overlay.
+// ---------------------------------------------------------------------------
+.focusHalo {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--color-lime-rgb), 0.0) 0%,
+    rgba(var(--color-lime-rgb), 0.0) 100%
+  );
+  pointer-events: none;
   z-index: 0;
-  background: #ffffff;
-}
+  opacity: 0;
+  transition:
+    opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+    background 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
 
-.backgroundImage {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #ffffff;
-  opacity: 1;
-
-  &.blurred {
+  &.haloActive {
     opacity: 1;
+    background: radial-gradient(
+      circle,
+      rgba(var(--color-lime-rgb), 0.04) 0%,
+      rgba(var(--color-lime-rgb), 0.02) 40%,
+      transparent 70%
+    );
+  }
+
+  &.haloFlow {
+    opacity: 1;
+    background: radial-gradient(
+      circle,
+      rgba(var(--color-lime-rgb), 0.07) 0%,
+      rgba(var(--color-lime-rgb), 0.03) 35%,
+      transparent 65%
+    );
+    animation: haloBreath 6s ease-in-out infinite;
   }
 }
 
+// ---------------------------------------------------------------------------
+// Main content area
+// ---------------------------------------------------------------------------
 .content {
   position: relative;
   z-index: 1;
@@ -88,39 +121,41 @@
   align-items: center;
   gap: var(--space-8);
   opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
 
   &.visible {
-    opacity: 1;
-    transform: translateY(0);
+    animation: portalReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
   }
 }
 
-  .header {
-    text-align: center;
-    margin-bottom: var(--space-6);
-    animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both;
-    transition: filter 0.2s ease, opacity 0.2s ease;
-
-    &.blurred {
-      filter: blur(1px);
-      opacity: 0.6;
-    }
-  }
+// ---------------------------------------------------------------------------
+// Header ? recedes during engagement, nearly invisible in flow
+// ---------------------------------------------------------------------------
+.header {
+  text-align: center;
+  margin-bottom: var(--space-4);
+  transition:
+    opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 .title {
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
   line-height: var(--line-height-tight);
   font-family: var(--inkblot-typography-font-family-sans);
   letter-spacing: -0.02em;
 }
 
 .titleBrand {
-  background: linear-gradient(135deg, var(--color-lime-light) 0%, var(--color-lime) 50%, var(--color-lime-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-lime-light) 0%,
+    var(--color-lime) 50%,
+    var(--color-lime-dark) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -133,48 +168,102 @@
   max-width: 320px;
   margin: 0 auto;
   font-family: var(--inkblot-typography-font-family-sans);
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
+.subtitleRecede {
+  opacity: 0.4;
+  transform: translateY(-2px);
+}
+
+// ---------------------------------------------------------------------------
+// Tunnel mode transitions
+// ---------------------------------------------------------------------------
+// These utility classes are applied to secondary elements. They provide
+// progressive levels of recession: recede (fade + shrink), hide (nearly
+// invisible), collapse (height collapses for flow state).
+// ---------------------------------------------------------------------------
+.tunnelRecede {
+  opacity: 0.35;
+  transform: scale(0.97);
+  filter: blur(0.5px);
+  transition:
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tunnelHide {
+  opacity: 0.15;
+  transform: translateY(-6px) scale(0.95);
+  filter: blur(1px);
+  transition:
+    opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tunnelCollapse {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  transition:
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    margin 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ---------------------------------------------------------------------------
+// Form
+// ---------------------------------------------------------------------------
 .form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
+  gap: var(--space-5);
 }
 
-  .socialLoginContainer {
-    transition: filter 0.2s ease, opacity 0.2s ease;
-
-    &.blurred {
-      filter: blur(1px);
-      opacity: 0.6;
-    }
-  }
-
-.emailInput {
+.formBlock {
   position: relative;
   width: 100%;
 }
 
+.formElevated {
+  box-shadow:
+    0 0 0 1px rgba(var(--color-lime-rgb), 0.08),
+    0 8px 32px -8px rgba(0, 0, 0, 0.08),
+    0 0 48px -12px rgba(var(--color-lime-rgb), 0.06);
+  transition: box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .errorMessage {
   position: absolute;
-  top: -24px;
+  top: -22px;
   left: 4px;
   color: var(--color-error);
   font-size: 13px;
   font-family: var(--inkblot-typography-font-family-sans);
   font-weight: 400;
   line-height: 1.4;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.25s ease;
   z-index: 2;
 }
 
+// ---------------------------------------------------------------------------
+// Options row
+// ---------------------------------------------------------------------------
 .options {
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
-  margin-top: var(--space-2);
+  transition:
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .linkButton {
@@ -192,6 +281,21 @@
   }
 }
 
+// ---------------------------------------------------------------------------
+// Social login container
+// ---------------------------------------------------------------------------
+.socialLoginContainer {
+  max-height: 120px;
+  transition:
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ---------------------------------------------------------------------------
+// Bottom bar ? fixed, with slide-up entrance
+// ---------------------------------------------------------------------------
 .bottomContainer {
   position: fixed;
   bottom: 0;
@@ -204,12 +308,13 @@
   padding: 0 var(--space-4) var(--space-6) var(--space-4);
   background: var(--color-bg-primary);
   opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.9s forwards;
+  transition:
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.visible {
-    opacity: 1;
-    transform: translateY(0);
+    animation: footerSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
   }
 }
 
@@ -229,7 +334,12 @@
     width: 100%;
     max-width: 400px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--color-border-secondary), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-border-secondary),
+      transparent
+    );
   }
 }
 
@@ -262,6 +372,25 @@
   }
 }
 
+// ---------------------------------------------------------------------------
+// Shared classes (used by AuthPageLayout for sub-pages like signup, forgot pw)
+// ---------------------------------------------------------------------------
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--color-bg-primary);
+}
+
+.backgroundImage {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-primary);
+
+  &.blurred {
+    // No visual change -- kept for AuthPageLayout compatibility
+  }
+}
 .backLink {
   display: inline-block;
   margin-bottom: var(--space-4);
@@ -281,13 +410,16 @@
 
 .formContent {
   width: 100%;
-  animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
 }
 
-// Responsive design
+// ---------------------------------------------------------------------------
+// Responsive
+// ---------------------------------------------------------------------------
 @media (max-width: 640px) {
   .container {
     padding: var(--space-4);
+    padding-top: 15vh;
   }
 
   .content {
@@ -295,7 +427,7 @@
   }
 
   .header {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-3);
   }
 
   .title {
@@ -310,7 +442,12 @@
     gap: var(--space-4);
   }
 
+  .focusHalo {
+    width: 500px;
+    height: 500px;
+  }
+
   .footer {
     margin-top: var(--space-6);
   }
-} 
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+CLIENT="${2:-citron}"
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT"
+case "${1:-}" in
+  web) node devtools/inject.mjs "$CLIENT"; npm run build; echo "→ dist/" ;;
+  *) echo "Usage: ./build web [citron|inkid]"; exit 1 ;;
+esac

@@ -20,7 +20,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<AuthPortal />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<AuthPortal />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

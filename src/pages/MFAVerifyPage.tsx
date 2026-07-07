@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthPageLayout } from '@/components/auth/AuthPageLayout';
-import { getPendingRedirectUri, clearPendingRedirectUri, buildRedirectUrl } from '@/lib/redirect';
-import { ACCESS_TOKEN_STORAGE_KEY } from '@/lib/auth-api';
+import { resolvePostAuthRedirect } from '@/lib/finish-auth';
 
 export const MFAVerifyPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, verifyMFA, isLoading, error } = useAuthStore();
   const [code, setCode] = useState('');
 
@@ -17,13 +17,11 @@ export const MFAVerifyPage: React.FC = () => {
     if (!user?.id || !code) return;
     try {
       await verifyMFA(user.id, code);
-      const redirectUri = getPendingRedirectUri();
-      if (redirectUri) {
-        clearPendingRedirectUri();
-        const token = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? undefined;
-        window.location.href = buildRedirectUrl(redirectUri, token);
+      const target = resolvePostAuthRedirect(location.search);
+      if (target.type === 'external') {
+        window.location.href = target.url;
       } else {
-        navigate('/dashboard', { replace: true });
+        navigate(target.url, { replace: true });
       }
     } catch {
       // Error in store

@@ -1,3 +1,2 @@
-// The login experience lives in components/login; this re-export keeps the
-// existing route wiring and import paths untouched.
+// Login/signup experience lives in components/login; re-export keeps route imports stable.
 export { LoginExperience as AuthPortal } from '../login/LoginExperience';
