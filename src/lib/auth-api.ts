@@ -24,6 +24,8 @@ import {
 
 import { resolveIdentityApiUrl } from '@/lib/deploy-tier';
 
+export { ACCESS_TOKEN_STORAGE_KEY };
+
 const useMock =
   import.meta.env.VITE_USE_MOCK_AUTH !== 'false' || !resolveIdentityApiUrl();
 
