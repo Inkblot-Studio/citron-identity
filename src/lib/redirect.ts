@@ -1,3 +1,5 @@
+import { allowedRedirectOrigins } from '@/lib/deploy-tier';
+
 /**
  * Cross-domain redirect flow for IS (Identity Service).
  *
@@ -8,10 +10,7 @@
  * Dashboard is only used when no redirect_uri (localhost/testing).
  */
 
-const ALLOWED_ORIGINS_ENV = import.meta.env.VITE_ALLOWED_REDIRECT_ORIGINS ?? '';
-const ALLOWED_ORIGINS: string[] = ALLOWED_ORIGINS_ENV
-  ? (ALLOWED_ORIGINS_ENV as string).split(',').map((o) => o.trim().toLowerCase()).filter(Boolean)
-  : [];
+const ALLOWED_ORIGINS: string[] = allowedRedirectOrigins();
 
 /** localhost is always allowed for dev/testing */
 function isLocalhostOrigin(origin: string): boolean {
