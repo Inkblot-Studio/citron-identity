@@ -22,12 +22,14 @@ import {
   setTokens,
 } from '@/lib/token-storage';
 
-export { ACCESS_TOKEN_STORAGE_KEY };
-
-const API_BASE_URL = (import.meta.env.VITE_AUTH_API_URL as string | undefined)?.replace(/\/$/, '');
+import { resolveIdentityApiUrl } from '@/lib/deploy-tier';
 
 const useMock =
-  import.meta.env.VITE_USE_MOCK_AUTH !== 'false' || !import.meta.env.VITE_AUTH_API_URL;
+  import.meta.env.VITE_USE_MOCK_AUTH !== 'false' || !resolveIdentityApiUrl();
+
+function apiBaseUrl(): string {
+  return resolveIdentityApiUrl();
+}
 
 export interface AuthApi {
   checkAccount(email: string): Promise<AccountCheck>;
@@ -87,7 +89,7 @@ async function readProblemMessage(res: Response, fallback: string): Promise<stri
 
 // POST /api/auth/check — email-first sign-in routing (password vs signup step).
 async function realCheckAccount(email: string): Promise<AccountCheck> {
-  const res = await fetch(`${API_BASE_URL}/api/auth/check`, {
+  const res = await fetch(`${apiBaseUrl()}/api/auth/check`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
@@ -122,7 +124,7 @@ async function realLogin(
   password: string,
   tenantId: string
 ): Promise<{ user: User; requiresMfa?: boolean }> {
-  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+  const res = await fetch(`${apiBaseUrl()}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -172,7 +174,7 @@ async function realSignup(payload: {
   username: string;
   tenantId: string;
 }): Promise<{ user: User; verificationToken: string; requiresEmailVerification?: boolean }> {
-  const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+  const res = await fetch(`${apiBaseUrl()}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -212,7 +214,7 @@ async function realGetSession(): Promise<User | null> {
   const token = getAccessToken();
   if (!token) return null;
 
-  const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+  const res = await fetch(`${apiBaseUrl()}/api/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
