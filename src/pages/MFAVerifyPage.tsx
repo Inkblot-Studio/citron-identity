@@ -14,9 +14,9 @@ export const MFAVerifyPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id || !code) return;
+    if (!code) return;
     try {
-      await verifyMFA(user.id, code);
+      await verifyMFA(code);
       const target = resolvePostAuthRedirect(location.search);
       if (target.type === 'external') {
         window.location.href = target.url;

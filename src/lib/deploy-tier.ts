@@ -9,6 +9,7 @@ const PROD_REDIRECT_ORIGINS = [
 const STAGE_REDIRECT_ORIGINS = [
   "https://stage.console.citronos.com",
   "https://stage.ermax-bg.com",
+  "https://www.stage.ermax-bg.com",
   "http://23.88.36.188:3000",
   "http://23.88.36.188:3100",
 ];

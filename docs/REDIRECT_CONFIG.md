@@ -44,10 +44,11 @@ VITE_ALLOWED_REDIRECT_ORIGINS=https://app-a.example.com,https://app-c.example.co
 Your app needs a `/callback` (or similar) route that:
 
 1. Receives the user back from auth
-2. Exchanges a token (if you add that later) or validates the session
-3. Redirects the user to the intended destination
+2. Reads the access token from the URL **fragment** (`#token=…`)
+3. Optionally reads `remember=1` from the same fragment when the user checked "Remember me" on the identity portal — pass `rememberMe: true` to your backend token exchange for a longer refresh session
+4. Redirects the user to the intended destination
 
-For now, auth redirects to the exact `redirect_uri` URL. Session/token handshake can be added when you integrate a real backend.
+Auth redirects to the exact `redirect_uri` URL with credentials in the fragment (never query params), e.g. `#token=<jwt>&remember=1`.
 
 ## Dashboard (localhost only)
 

@@ -14,6 +14,7 @@ import {
   clearPendingRedirectUri,
   buildRedirectUrl,
   shouldForceLogin,
+  getRememberMe,
 } from '@/lib/redirect';
 import { AuthExperienceShell } from './AuthExperienceShell';
 import { AuthCardHeader } from './AuthCardHeader';
@@ -77,6 +78,7 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
   const [showPassword, setShowPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [rememberMe, setRememberMeChecked] = useState(false);
 
   const [attempts, setAttempts] = useState(0);
   const [humanVerified, setHumanVerified] = useState(false);
@@ -110,7 +112,9 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
       if (redirectUri) {
         clearPendingRedirectUri();
         const token = getAccessToken() ?? undefined;
-        window.location.href = buildRedirectUrl(redirectUri, token);
+        window.location.href = buildRedirectUrl(redirectUri, token, {
+          rememberMe: getRememberMe(),
+        });
       } else {
         navigate('/dashboard', { replace: true });
       }
@@ -180,7 +184,7 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
     resetTransient();
     try {
       justAuthed.current = true;
-      await login(email.trim(), password.trim(), DEFAULT_TENANT_ID);
+      await login(email.trim(), password.trim(), DEFAULT_TENANT_ID, rememberMe);
       resetSecurity();
     } catch {
       justAuthed.current = false;
@@ -225,11 +229,10 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
       setLocalError('Enter the 6-digit code');
       return;
     }
-    if (!user) return;
     resetTransient();
     try {
       justAuthed.current = true;
-      await verifyMFA(user.id, otp);
+      await verifyMFA(otp);
     } catch {
       justAuthed.current = false;
     }
@@ -429,6 +432,15 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
             </AnimatePresence>
 
             {errorRegion}
+
+            <label className={styles.terms}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMeChecked(e.target.checked)}
+              />
+              <span>Запомни ме на това устройство</span>
+            </label>
 
             <ShimmerButton
               type="submit"

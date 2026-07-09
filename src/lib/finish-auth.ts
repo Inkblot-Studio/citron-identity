@@ -1,4 +1,4 @@
-import { buildRedirectUrl, clearPendingRedirectUri, getPendingRedirectUri } from '@/lib/redirect';
+import { buildRedirectUrl, clearPendingRedirectUri, getPendingRedirectUri, getRememberMe } from '@/lib/redirect';
 import { getAccessToken } from '@/lib/token-storage';
 
 /**
@@ -14,7 +14,9 @@ export function resolvePostAuthRedirect(search: string): {
     clearPendingRedirectUri();
     return {
       type: 'external',
-      url: buildRedirectUrl(pending, getAccessToken() ?? undefined),
+      url: buildRedirectUrl(pending, getAccessToken() ?? undefined, {
+        rememberMe: getRememberMe(),
+      }),
     };
   }
 

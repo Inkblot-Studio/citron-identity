@@ -49,6 +49,7 @@ export function getRedirectUriFromSearch(search: string): string | null {
 }
 
 const REDIRECT_URI_KEY = 'is_redirect_uri';
+const REMEMBER_ME_KEY = 'is_remember_me';
 
 /** Persist redirect_uri across auth flow (e.g. through MFA step). */
 export function setPendingRedirectUri(uri: string): void {
@@ -63,14 +64,35 @@ export function clearPendingRedirectUri(): void {
   sessionStorage.removeItem(REDIRECT_URI_KEY);
 }
 
+/** Persist "remember me" across the MFA step (password → OTP). */
+export function setRememberMe(value: boolean): void {
+  if (value) sessionStorage.setItem(REMEMBER_ME_KEY, '1');
+  else sessionStorage.removeItem(REMEMBER_ME_KEY);
+}
+
+export function getRememberMe(): boolean {
+  return sessionStorage.getItem(REMEMBER_ME_KEY) === '1';
+}
+
+export function clearRememberMe(): void {
+  sessionStorage.removeItem(REMEMBER_ME_KEY);
+}
+
 /**
  * Build the post-login redirect URL. The token travels in the URL fragment so
  * it never reaches server logs or Referer headers.
  */
-export function buildRedirectUrl(redirectUri: string, token?: string): string {
+export function buildRedirectUrl(
+  redirectUri: string,
+  token?: string,
+  options?: { rememberMe?: boolean }
+): string {
   try {
     const url = new URL(redirectUri);
-    if (token) url.hash = `token=${encodeURIComponent(token)}`;
+    const parts: string[] = [];
+    if (token) parts.push(`token=${encodeURIComponent(token)}`);
+    if (options?.rememberMe) parts.push('remember=1');
+    if (parts.length > 0) url.hash = parts.join('&');
     return url.toString();
   } catch {
     return redirectUri;
