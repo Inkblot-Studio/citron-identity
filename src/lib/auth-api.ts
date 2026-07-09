@@ -29,8 +29,22 @@ export { ACCESS_TOKEN_STORAGE_KEY };
 const useMock =
   import.meta.env.VITE_USE_MOCK_AUTH !== 'false' || !resolveIdentityApiUrl();
 
+const MFA_TICKET_KEY = 'is_mfa_ticket';
+
 function apiBaseUrl(): string {
   return resolveIdentityApiUrl();
+}
+
+export function setMfaTicket(ticket: string): void {
+  sessionStorage.setItem(MFA_TICKET_KEY, ticket);
+}
+
+export function getMfaTicket(): string | null {
+  return sessionStorage.getItem(MFA_TICKET_KEY);
+}
+
+export function clearMfaTicket(): void {
+  sessionStorage.removeItem(MFA_TICKET_KEY);
 }
 
 export interface AuthApi {
@@ -49,9 +63,10 @@ export interface AuthApi {
   sendPasswordReset(email: string, tenantId: string): Promise<void>;
   resetPassword(token: string, newPassword: string): Promise<void>;
   verifyEmail(token: string): Promise<User>;
-  setupMFA(userId: string): Promise<{ secret: string; qrDataUrl: string }>;
+  setupMFA(userId: string): Promise<{ secret: string; otpAuthUri: string }>;
   confirmMFA(userId: string, code: string): Promise<void>;
-  verifyMFA(userId: string, code: string): Promise<boolean>;
+  verifyMFA(code: string): Promise<User>;
+  disableMFA(password: string): Promise<void>;
   getTenantsForUser(userId: string): Promise<Tenant[]>;
   getSession(): Promise<User | null>;
 }
@@ -81,12 +96,22 @@ interface IdentityMeResponse {
   email: string;
   displayName?: string;
   emailVerified?: boolean;
-  mfaEnabled?: boolean;
+  mfaTotpEnabled?: boolean;
+}
+
+interface TotpEnrollmentStartResponse {
+  secretBase32: string;
+  otpAuthUri: string;
 }
 
 async function readProblemMessage(res: Response, fallback: string): Promise<string> {
   const problem = (await res.json().catch(() => null)) as { detail?: string; title?: string } | null;
   return problem?.detail ?? problem?.title ?? fallback;
+}
+
+function authHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 // POST /api/auth/check — email-first sign-in routing (password vs signup step).
@@ -113,7 +138,19 @@ function mapMeToUser(data: IdentityMeResponse, tenantId: string): User {
     name: data.displayName,
     isAuthenticated: true,
     isEmailVerified: data.emailVerified ?? true,
-    twoFactorEnabled: data.mfaEnabled ?? false,
+    twoFactorEnabled: data.mfaTotpEnabled ?? false,
+    createdAt: new Date().toISOString(),
+    tenants: [{ tenantId, role: 'member' }],
+  };
+}
+
+function mapAuthToUser(auth: IdentityAuthResponse, email: string, tenantId: string): User {
+  return {
+    id: auth.userId,
+    email,
+    isAuthenticated: true,
+    isEmailVerified: true,
+    twoFactorEnabled: false,
     createdAt: new Date().toISOString(),
     tenants: [{ tenantId, role: 'member' }],
   };
@@ -139,6 +176,7 @@ async function realLogin(
   const data = (await res.json()) as IdentityLoginResponse;
 
   if (data.mfaRequired) {
+    if (data.mfaTicket) setMfaTicket(data.mfaTicket);
     return {
       user: {
         id: '',
@@ -157,15 +195,7 @@ async function realLogin(
   setTokens(auth.accessToken);
 
   return {
-    user: {
-      id: auth.userId,
-      email,
-      isAuthenticated: true,
-      isEmailVerified: true,
-      twoFactorEnabled: false,
-      createdAt: new Date().toISOString(),
-      tenants: [{ tenantId, role: 'member' }],
-    },
+    user: mapAuthToUser(auth, email, tenantId),
   };
 }
 
@@ -229,10 +259,89 @@ async function realGetSession(): Promise<User | null> {
   return mapMeToUser(data, 'citron');
 }
 
+async function realVerifyMFA(code: string): Promise<User> {
+  const mfaTicket = getMfaTicket();
+  if (!mfaTicket) {
+    throw new Error('MFA session expired. Sign in with your password again.');
+  }
+
+  const res = await fetch(`${apiBaseUrl()}/api/auth/login/mfa`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mfaTicket, code }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await readProblemMessage(res, 'Invalid code'));
+  }
+
+  const auth = (await res.json()) as IdentityAuthResponse;
+  setTokens(auth.accessToken);
+  clearMfaTicket();
+
+  const session = await realGetSession();
+  if (session) return session;
+
+  return {
+    id: auth.userId,
+    email: '',
+    isAuthenticated: true,
+    isEmailVerified: true,
+    twoFactorEnabled: true,
+    createdAt: new Date().toISOString(),
+    tenants: [{ tenantId: 'citron', role: 'member' }],
+  };
+}
+
+async function realSetupMFA(_userId: string): Promise<{ secret: string; otpAuthUri: string }> {
+  const res = await fetch(`${apiBaseUrl()}/api/mfa/totp/enrollment`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(await readProblemMessage(res, 'Failed to setup MFA'));
+  }
+
+  const data = (await res.json()) as TotpEnrollmentStartResponse;
+  return { secret: data.secretBase32, otpAuthUri: data.otpAuthUri };
+}
+
+async function realConfirmMFA(_userId: string, code: string): Promise<void> {
+  const res = await fetch(`${apiBaseUrl()}/api/mfa/totp/enrollment/confirmation`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ code }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await readProblemMessage(res, 'Invalid code'));
+  }
+}
+
+async function realDisableMFA(password: string): Promise<void> {
+  const res = await fetch(`${apiBaseUrl()}/api/mfa/totp/disable`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await readProblemMessage(res, 'Failed to disable MFA'));
+  }
+}
+
 // Real auth when VITE_USE_MOCK_AUTH=false AND VITE_AUTH_API_URL is set; mocks
-// otherwise (UI-only dev). Magic link, MFA setup/verify-by-userId, and tenant
-// listing stay mocked — citron-identity-api doesn't support tenants or magic
-// links, and completes MFA via a ticket, not a userId.
+// otherwise (UI-only dev). Magic link and tenant listing stay mocked.
 export const authApi: AuthApi = useMock
   ? {
       checkAccount: mockCheckAccount,
@@ -247,11 +356,11 @@ export const authApi: AuthApi = useMock
       setupMFA: mockSetupMFA,
       confirmMFA: mockConfirmMFA,
       verifyMFA: mockVerifyMFA,
+      disableMFA: async () => {},
       getTenantsForUser: mockGetTenantsForUser,
       getSession: async () => null,
     }
   : {
-      // Email-first routing hits the real POST /api/auth/check.
       checkAccount: realCheckAccount,
       login: realLogin,
       signup: realSignup,
@@ -261,9 +370,10 @@ export const authApi: AuthApi = useMock
       sendPasswordReset: mockSendPasswordReset,
       resetPassword: mockResetPassword,
       verifyEmail: mockVerifyEmail,
-      setupMFA: mockSetupMFA,
-      confirmMFA: mockConfirmMFA,
-      verifyMFA: mockVerifyMFA,
+      setupMFA: realSetupMFA,
+      confirmMFA: realConfirmMFA,
+      verifyMFA: realVerifyMFA,
+      disableMFA: realDisableMFA,
       getTenantsForUser: mockGetTenantsForUser,
       getSession: realGetSession,
     };

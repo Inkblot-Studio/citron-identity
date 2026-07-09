@@ -11,6 +11,7 @@ const pendingResetTokens = new Map<string, { email: string; expiresAt: number }>
 const pendingEmailVerifyTokens = new Map<string, { userId: string; expiresAt: number }>();
 const mfaSecrets = new Map<string, string>();
 const mockSignedUpUsers = new Map<string, User & { password: string }>();
+let pendingMfaUserId: string | null = null;
 
 function delay(ms: number = MOCK_DELAY_MS): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -79,8 +80,10 @@ export async function mockLogin(
     isAuthenticated: true,
   };
   if (mockUser.twoFactorEnabled) {
+    pendingMfaUserId = user.id;
     return { user: { ...user, isAuthenticated: false }, requiresMfa: true };
   }
+  pendingMfaUserId = null;
   return { user };
 }
 
@@ -189,12 +192,16 @@ export async function mockVerifyEmail(token: string): Promise<User> {
   return { ...userData, isEmailVerified: true, isAuthenticated: true };
 }
 
-export async function mockSetupMFA(userId: string): Promise<{ secret: string; qrDataUrl: string }> {
+export async function mockSetupMFA(userId: string): Promise<{ secret: string; otpAuthUri: string }> {
   await delay();
   const secret = 'MOCK' + Math.random().toString(36).slice(2, 18).toUpperCase();
   mfaSecrets.set(userId, secret);
-  const qrDataUrl = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==`;
-  return { secret, qrDataUrl };
+  const user = findUserById(userId) ?? mockSignedUpUsers.get(userId);
+  const email = user?.email ?? 'user@example.com';
+  return {
+    secret,
+    otpAuthUri: `otpauth://totp/IS:${email}?secret=${secret}`,
+  };
 }
 
 export async function mockConfirmMFA(userId: string, code: string): Promise<void> {
@@ -205,22 +212,26 @@ export async function mockConfirmMFA(userId: string, code: string): Promise<void
   mfaSecrets.set(userId, 'confirmed');
 }
 
-export async function mockVerifyMFA(
-  userId: string,
-  code: string
-): Promise<boolean> {
+export async function mockVerifyMFA(code: string): Promise<User> {
   await delay();
+  const userId = pendingMfaUserId;
+  if (!userId) {
+    throw new Error('MFA session expired. Sign in with your password again.');
+  }
   const backupCodes = MOCK_BACKUP_CODES[userId];
-  if (backupCodes?.includes(code)) {
-    return true;
+  const codeValid =
+    backupCodes?.includes(code) ||
+    (code.length === 6 && /^\d+$/.test(code) && mfaSecrets.get(userId) === 'confirmed');
+  if (!codeValid) {
+    throw new Error('Invalid code');
   }
-  if (code.length === 6 && /^\d+$/.test(code)) {
-    const secret = mfaSecrets.get(userId);
-    if (secret === 'confirmed') {
-      return true;
-    }
+  const mockUser = findUserById(userId) ?? mockSignedUpUsers.get(userId);
+  if (!mockUser) {
+    throw new Error('User not found');
   }
-  return false;
+  pendingMfaUserId = null;
+  const { password: _p, ...userData } = mockUser;
+  return { ...userData, isAuthenticated: true };
 }
 
 export async function mockGetTenantsForUser(userId: string): Promise<Tenant[]> {

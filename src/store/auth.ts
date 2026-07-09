@@ -2,8 +2,9 @@ import { create } from 'zustand';
 import type { AccountCheck, User } from '@/types/auth';
 
 export type { User };
-import { authApi } from '@/lib/auth-api';
+import { authApi, clearMfaTicket } from '@/lib/auth-api';
 import { clearTokens } from '@/lib/token-storage';
+import { clearRememberMe, setRememberMe } from '@/lib/redirect';
 import { useTenantStore } from './tenant';
 
 export type SignupStep = 'testimonials' | 'subscription' | 'account';
@@ -20,14 +21,14 @@ export interface AuthState {
   pendingMFA: boolean;
   pendingEmailVerification: boolean;
   mfaSecret?: string;
-  mfaQrDataUrl?: string;
+  mfaOtpAuthUri?: string;
   signupStep: SignupStep;
   signupDraft: { plan?: SignupPlan };
 }
 
 export interface AuthActions {
   checkAccount: (email: string) => Promise<AccountCheck>;
-  login: (email: string, password: string, tenantId: string) => Promise<void>;
+  login: (email: string, password: string, tenantId: string, rememberMe?: boolean) => Promise<void>;
   signup: (payload: {
     email: string;
     password: string;
@@ -42,7 +43,7 @@ export interface AuthActions {
   verifyEmail: (token: string) => Promise<void>;
   setupMFA: (userId: string) => Promise<void>;
   confirmMFA: (userId: string, code: string) => Promise<void>;
-  verifyMFA: (userId: string, code: string) => Promise<void>;
+  verifyMFA: (code: string) => Promise<void>;
   setError: (error: string | null) => void;
   clearError: () => void;
   logout: () => void;
@@ -88,7 +89,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   pendingMFA: false,
   pendingEmailVerification: false,
   mfaSecret: undefined,
-  mfaQrDataUrl: undefined,
+  mfaOtpAuthUri: undefined,
   signupStep: 'testimonials',
   signupDraft: {},
 
@@ -107,8 +108,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     }
   },
 
-  login: async (email, password, tenantId) => {
+  login: async (email, password, tenantId, rememberMe = false) => {
     set({ isLoading: true, error: null });
+    setRememberMe(rememberMe);
     try {
       const result = await authApi.login(email, password, tenantId);
       if (result.requiresMfa) {
@@ -226,8 +228,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   setupMFA: async (userId) => {
     set({ isLoading: true, error: null });
     try {
-      const { secret, qrDataUrl } = await authApi.setupMFA(userId);
-      set({ mfaSecret: secret, mfaQrDataUrl: qrDataUrl, isLoading: false });
+      const { secret, otpAuthUri } = await authApi.setupMFA(userId);
+      set({ mfaSecret: secret, mfaOtpAuthUri: otpAuthUri, isLoading: false });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Failed to setup MFA',
@@ -245,7 +247,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (user) {
         const updated = { ...user, twoFactorEnabled: true };
         persistUser(updated);
-        set({ user: updated, mfaSecret: undefined, mfaQrDataUrl: undefined, isLoading: false });
+        set({ user: updated, mfaSecret: undefined, mfaOtpAuthUri: undefined, isLoading: false });
       }
     } catch (err) {
       set({
@@ -256,21 +258,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     }
   },
 
-  verifyMFA: async (userId, code) => {
+  verifyMFA: async (code) => {
     set({ isLoading: true, error: null });
     try {
-      const valid = await authApi.verifyMFA(userId, code);
-      if (!valid) {
-        set({ error: 'Invalid code', isLoading: false });
-        throw new Error('Invalid code');
-      }
-      const { user } = get();
-      if (user) {
-        const updated = { ...user, isAuthenticated: true };
-        persistUser(updated);
-        useTenantStore.getState().loadTenantsForUser(user.id);
-        set({ user: updated, pendingMFA: false, isLoading: false });
-      }
+      const user = await authApi.verifyMFA(code);
+      persistUser(user);
+      useTenantStore.getState().loadTenantsForUser(user.id);
+      const tenantId = user.tenants[0]?.tenantId ?? 'citron';
+      useTenantStore.getState().setTenant({ id: tenantId, slug: tenantId, name: tenantId });
+      set({ user, pendingMFA: false, isLoading: false });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Invalid code',
@@ -286,6 +282,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   logout: () => {
     persistUser(null);
     clearTokens();
+    clearMfaTicket();
+    clearRememberMe();
     useTenantStore.getState().clearTenants();
     set({
       user: null,
@@ -293,7 +291,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       pendingMFA: false,
       pendingEmailVerification: false,
       mfaSecret: undefined,
-      mfaQrDataUrl: undefined,
+      mfaOtpAuthUri: undefined,
       signupStep: 'testimonials',
       signupDraft: {},
     });
