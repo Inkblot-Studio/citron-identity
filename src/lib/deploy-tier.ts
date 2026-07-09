@@ -10,8 +10,8 @@ const STAGE_REDIRECT_ORIGINS = [
   "https://stage.console.citronos.com",
   "https://stage.ermax-bg.com",
   "https://www.stage.ermax-bg.com",
-  "http://23.88.36.188:3000",
-  "http://23.88.36.188:3100",
+  "http://37.27.204.2:3000",
+  "http://37.27.204.2:3100",
 ];
 
 const STAGE_PORTS = new Set(["3100", "3101", "3104", "8181"]);
@@ -24,8 +24,8 @@ export function tierFromHostname(hostname: string, port?: string): DeployTier {
   if (host === "identity.citronos.com") return "prod";
   if (host === "stage.identity.citronos.com") return "stage";
 
-  if (host === "23.88.36.188" && port && STAGE_PORTS.has(port)) return "stage";
-  if (host === "23.88.36.188") return "prod";
+  if (host === "37.27.204.2" && port && STAGE_PORTS.has(port)) return "stage";
+  if (host === "37.27.204.2") return "prod";
 
   if (host === "localhost" || host === "127.0.0.1") return "stage";
 

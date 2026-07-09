@@ -22,7 +22,7 @@ pure-mock UI dev.
 
 - `main` — domain config: `.env.production` → api.identity.citronos.com, redirect origin console.citronos.com
 - `stage` — VPS domain config: API `https://stage.api.identity.citronos.com`, redirect origins `stage.console.citronos.com` + `stage.ermax-bg.com` (bare-IP ports :3100/:8181 remain as fallbacks in `deploy-tier.ts`)
-- VPS serves the **static dist** (no node at runtime): clone at `/root/inkblot-studio/prod/citron-identity`, built there via one-off `docker run node:20-alpine npm ci && npm run build`, Caddy serves `dist/` at https://stage.identity.citronos.com (prod: https://identity.citronos.com). Deploys/rollbacks via Citron Ops (:9090) — rollback restores dist **contents in place** (never swap the dir: Caddy's bind mount goes stale → 404s).
+- VPS serves the **static dist** (no node at runtime): clone at `/root/inkblot-studio/prod/citron-identity`, built there via one-off `docker run node:20-alpine npm ci && npm run build`, Caddy serves `dist/` at https://stage.identity.citronos.com (prod: https://identity.citronos.com). Deploys/rollbacks via Citron Ops (https://ops.citronos.com) — rollback restores dist **contents in place** (never swap the dir: Caddy's bind mount goes stale → 404s).
 - Dev: `npm run dev` on port 3002 (see workspace `.claude/launch.json`); 3000/3001 are taken on this machine.
 
 ## Test account
