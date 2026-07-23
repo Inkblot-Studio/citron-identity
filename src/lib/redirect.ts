@@ -5,7 +5,8 @@
  *   ?redirect_uri=https://app.example.com/callback&state=optional_csrf
  *
  * After login, auth redirects to that URL with a token/session.
- * Dashboard is only used when no redirect_uri (localhost/testing).
+ * When no redirect_uri is provided, VITE_DEFAULT_POST_LOGIN_URL is used
+ * (Citron account callback). Dashboard is only the last-resort fallback.
  */
 
 const ALLOWED_ORIGINS_ENV = import.meta.env.VITE_ALLOWED_REDIRECT_ORIGINS ?? '';
@@ -40,6 +41,13 @@ export function validateRedirectUri(uri: string | null | undefined): string | nu
   }
 }
 
+/** Fallback after login when the relying app did not pass redirect_uri. */
+export const DEFAULT_POST_LOGIN_URL: string | null = (() => {
+  const raw = (import.meta.env.VITE_DEFAULT_POST_LOGIN_URL as string | undefined)?.trim();
+  if (!raw) return null;
+  return validateRedirectUri(raw);
+})();
+
 /**
  * Get redirect_uri from URL search params.
  */
@@ -57,11 +65,19 @@ export function setPendingRedirectUri(uri: string): void {
 }
 
 export function getPendingRedirectUri(): string | null {
-  return sessionStorage.getItem(REDIRECT_URI_KEY);
+  const raw = sessionStorage.getItem(REDIRECT_URI_KEY);
+  return validateRedirectUri(raw);
 }
 
 export function clearPendingRedirectUri(): void {
   sessionStorage.removeItem(REDIRECT_URI_KEY);
+}
+
+/**
+ * Best destination after auth: pending redirect_uri → default app URL → null.
+ */
+export function resolveExternalPostLoginUrl(): string | null {
+  return getPendingRedirectUri() ?? DEFAULT_POST_LOGIN_URL;
 }
 
 /**

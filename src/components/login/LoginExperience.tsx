@@ -10,10 +10,10 @@ import type { AuthProviderId } from '@/types/auth';
 import {
   getRedirectUriFromSearch,
   setPendingRedirectUri,
-  getPendingRedirectUri,
   clearPendingRedirectUri,
   buildRedirectUrl,
   shouldForceLogin,
+  resolveExternalPostLoginUrl,
 } from '@/lib/redirect';
 import { AuthExperienceShell } from './AuthExperienceShell';
 import { AuthCardHeader } from './AuthCardHeader';
@@ -106,7 +106,7 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
     if (shouldForceLogin(location.search) && !justAuthed.current) return;
 
     const go = () => {
-      const redirectUri = getPendingRedirectUri();
+      const redirectUri = resolveExternalPostLoginUrl();
       if (redirectUri) {
         clearPendingRedirectUri();
         const token = getAccessToken() ?? undefined;

@@ -1,20 +1,25 @@
-import { buildRedirectUrl, clearPendingRedirectUri, getPendingRedirectUri } from '@/lib/redirect';
+import {
+  buildRedirectUrl,
+  clearPendingRedirectUri,
+  resolveExternalPostLoginUrl,
+} from '@/lib/redirect';
 import { getAccessToken } from '@/lib/token-storage';
 
 /**
  * Where to send the user after a successful login / MFA / email verify.
- * Prefers OAuth-style redirect_uri, then internal returnUrl, then dashboard.
+ * Prefers OAuth-style redirect_uri, then VITE_DEFAULT_POST_LOGIN_URL, then
+ * internal returnUrl, then dashboard.
  */
 export function resolvePostAuthRedirect(search: string): {
   type: 'external' | 'internal';
   url: string;
 } {
-  const pending = getPendingRedirectUri();
-  if (pending) {
+  const external = resolveExternalPostLoginUrl();
+  if (external) {
     clearPendingRedirectUri();
     return {
       type: 'external',
-      url: buildRedirectUrl(pending, getAccessToken() ?? undefined),
+      url: buildRedirectUrl(external, getAccessToken() ?? undefined),
     };
   }
 

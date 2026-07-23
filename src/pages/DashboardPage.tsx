@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useTenantStore } from '@/store/tenant';
+import { getAccessToken } from '@/lib/token-storage';
+import {
+  buildRedirectUrl,
+  clearPendingRedirectUri,
+  resolveExternalPostLoginUrl,
+} from '@/lib/redirect';
+
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuthStore();
   const { currentTenant, availableTenants, setTenant } = useTenantStore();
   const navigate = useNavigate();
+
+  // If this portal is wired as Citron's IdP, bounce signed-in users back to
+  // the app (callback → HttpOnly cookie → /account) instead of trapping them
+  // on this empty profile screen.
+  useEffect(() => {
+    if (!user?.isAuthenticated) return;
+    const dest = resolveExternalPostLoginUrl();
+    if (!dest) return;
+    clearPendingRedirectUri();
+    const token = getAccessToken() ?? undefined;
+    window.location.replace(buildRedirectUrl(dest, token));
+  }, [user]);
 
   if (!user) return null;
 
@@ -13,6 +32,8 @@ export const DashboardPage: React.FC = () => {
     logout();
     navigate('/');
   };
+
+  const continueUrl = resolveExternalPostLoginUrl();
 
   return (
     <div className="min-h-screen p-6" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
@@ -55,6 +76,21 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {continueUrl && (
+          <div className="mb-6">
+            <p className="text-sm mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+              Taking you back to Citron…
+            </p>
+            <a
+              href={buildRedirectUrl(continueUrl, getAccessToken() ?? undefined)}
+              className="inline-flex px-4 py-2 rounded-lg font-medium text-white"
+              style={{ backgroundColor: 'var(--inkblot-color-accent-citron-500)' }}
+            >
+              Continue to Citron account
+            </a>
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-2 mb-8">
           <div className="p-4 rounded-xl border bg-white" style={{ borderColor: 'var(--color-border-primary)' }}>
