@@ -37,5 +37,9 @@ export default defineConfig({
   server: {
     port: 3002,
     host: true,
+    fs: {
+      // Monorepo: allow serving fonts/CSS from sibling citron-ds
+      allow: [repoRoot, resolve(repoRoot, '../citron-ds')],
+    },
   },
 })

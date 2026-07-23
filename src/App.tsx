@@ -10,6 +10,7 @@ import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { MFASetupPage } from './pages/MFASetupPage';
 import { MFAVerifyPage } from './pages/MFAVerifyPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { LogoutPage } from './pages/LogoutPage';
 import { LegalPage } from './pages/LegalPage';
 import { ProtectedRoute } from './components/routes/ProtectedRoute';
 import { usePageTitle } from './hooks/usePageTitle';
@@ -23,6 +24,7 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<AuthPortal />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/logout" element={<LogoutPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/verify-email/:token" element={<VerifyEmailPage />} />

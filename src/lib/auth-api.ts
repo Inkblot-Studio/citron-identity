@@ -98,6 +98,36 @@ function mapMeToUser(data: IdentityMeResponse, tenantId: string): User {
   };
 }
 
+interface IdentityCheckAccountResponse {
+  exists: boolean;
+  displayName?: string | null;
+  hasPassword: boolean;
+}
+
+async function realCheckAccount(email: string): Promise<AccountCheck> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await readProblemMessage(res, 'Could not verify email'));
+  }
+
+  const data = (await res.json()) as IdentityCheckAccountResponse;
+  // SSO-only accounts (no password) must not land on the password step.
+  // Until the API returns the provider id, treat them as Google for routing
+  // (LoginExperience only needs a truthy provider to show the SSO pane).
+  const provider =
+    data.exists && !data.hasPassword ? ('google' as const) : undefined;
+  return {
+    exists: data.exists,
+    name: data.displayName?.split(/\s+/)[0] || undefined,
+    provider,
+  };
+}
+
 async function realLogin(
   email: string,
   password: string,
@@ -224,7 +254,7 @@ export const authApi: AuthApi = useMock
       getSession: async () => null,
     }
   : {
-      checkAccount: mockCheckAccount,
+      checkAccount: realCheckAccount,
       login: realLogin,
       signup: realSignup,
       checkUsernameAvailability: mockCheckUsernameAvailability,

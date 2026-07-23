@@ -215,8 +215,14 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
       setCelebrating(true);
       setTimeout(() => setCelebrating(false), 1200);
       setStep('verifyEmail');
-    } catch {
+    } catch (err) {
       justAuthed.current = false;
+      // Race / stale check: account already exists → ask for password instead of trapping the user.
+      if (err instanceof Error && /already exists/i.test(err.message)) {
+        setPassword('');
+        setStep('password');
+        setLocalError('An account with this email already exists. Enter your password to sign in.');
+      }
     }
   };
 
