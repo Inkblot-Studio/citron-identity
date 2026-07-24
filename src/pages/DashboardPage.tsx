@@ -21,8 +21,9 @@ export const DashboardPage: React.FC = () => {
     if (!user?.isAuthenticated) return;
     const dest = resolveExternalPostLoginUrl();
     if (!dest) return;
+    const token = getAccessToken();
+    if (!token) return;
     clearPendingRedirectUri();
-    const token = getAccessToken() ?? undefined;
     window.location.replace(buildRedirectUrl(dest, token));
   }, [user]);
 

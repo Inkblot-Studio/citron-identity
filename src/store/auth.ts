@@ -3,7 +3,7 @@ import type { AccountCheck, User } from '@/types/auth';
 
 export type { User };
 import { authApi } from '@/lib/auth-api';
-import { clearTokens } from '@/lib/token-storage';
+import { clearTokens, getAccessToken } from '@/lib/token-storage';
 import { useTenantStore } from './tenant';
 
 export type SignupStep = 'testimonials' | 'subscription' | 'account';
@@ -327,11 +327,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
 
       const user = loadPersistedUser();
-      if (user) {
+      // Never treat a persisted profile as signed-in without a JWT — otherwise
+      // post-login redirects to apps go out with an empty `#token=` and break SSO.
+      if (user && getAccessToken()) {
         useTenantStore.getState().loadTenantsForUser(user.id);
         set({ user, isInitializing: false });
       } else {
-        set({ isInitializing: false });
+        if (user) persistUser(null);
+        if (!getAccessToken()) clearTokens();
+        set({ user: null, isInitializing: false });
       }
     } catch {
       set({ isInitializing: false });

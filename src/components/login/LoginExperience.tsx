@@ -108,8 +108,14 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
     const go = () => {
       const redirectUri = resolveExternalPostLoginUrl();
       if (redirectUri) {
+        const token = getAccessToken();
+        if (!token) {
+          // Stale "authenticated" profile without JWT — force a real sign-in.
+          justAuthed.current = false;
+          logout();
+          return;
+        }
         clearPendingRedirectUri();
-        const token = getAccessToken() ?? undefined;
         window.location.href = buildRedirectUrl(redirectUri, token);
       } else {
         navigate('/dashboard', { replace: true });
@@ -122,7 +128,7 @@ export const LoginExperience: React.FC<AuthFlowProps> = ({ start = 'email' }) =>
       return () => clearTimeout(t);
     }
     go();
-  }, [user, pendingMFA, navigate, location.search]);
+  }, [user, pendingMFA, navigate, location.search, logout]);
 
   const resetTransient = () => {
     setLocalError('');
